@@ -228,7 +228,8 @@ html{scroll-behavior:smooth}
 </div>
 <p style="font-size:12px;color:var(--muted);line-height:1.5">Your camera stays on your device — the photo is used only for this complaint.</p>
 </div>
-<img id="preview" class="photo" style="display:none">
+<img id="preview" class="photo" style="display:none;cursor:pointer" onclick="photoTap()" title="Tap to see the exact location on a map">
+<div id="geoCaption" style="display:none;font-size:13px;font-weight:600;line-height:1.5;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"></div>
 <button type="button" id="removePhotoBtn" class="photobtn alt" style="display:none;width:100%;margin-top:8px" onclick="removePhoto()">🗑 Remove Photo — attach a different one instead</button>
 <div id="photoCheck" style="display:none;font-size:13px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-top:8px"></div>
 <div id="aiResult"></div>
@@ -333,7 +334,7 @@ html{scroll-behavior:smooth}
 <tr><td>Leaflet + OpenStreetMap</td><td>Exact-location pinning — tap-to-pin or one-tap GPS; coordinates stored on the ticket with a view-on-map link for crews; degrades gracefully offline</td></tr>
 <tr><td>GSAP</td><td>Motion layer — guarded, so triage survives any CDN failure; the layout itself is a clean, simple white interface</td></tr>
 <tr><td>Hybrid Live AI (optional)</td><td>&ldquo;Verify with Live AI&rdquo; calls a live LLM with a 6-second timeout; if unreachable, it says so and the deterministic result stands</td></tr>
-<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (22 entries) in the GitHub repo</td></tr>
+<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (23 entries) in the GitHub repo</td></tr>
 </table>
 <div class="core"><b>Human + AI:</b> the AI analyses and recommends. Municipal officials verify and make the final decisions.</div>
 </section>
@@ -410,7 +411,7 @@ async function setPhoto(dataUrl){
     toast('That photo could not be opened — please use Take Photo instead');
     return;
   }
-  photoData=norm.url;
+  photoData=norm.url; photoOrigUrl=norm.url;
   const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
   const rb=document.getElementById('removePhotoBtn'); if(rb) rb.style.display='block';
   setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
@@ -447,21 +448,50 @@ function showLocMsg(code){
   if(pt) pt.innerHTML='📍 '+geoErrorText(code);
 }
 function hideLocMsg(){ const m=document.getElementById('locMsg'); if(m) m.style.display='none'; }
+let photoOrigUrl=null;
 function applyGeo(coords,silent){
   if(!coords) return false;
   if(photoMeta) photoMeta.geo=coords;
   const gl=document.getElementById('geoLine');
   if(gl) gl.innerHTML='📍 <b>Photo geo-tagged:</b> '+coords.lat+', '+coords.lng+' — captured with the photo, travels with the ticket.';
+  const cap=document.getElementById('geoCaption');
+  if(cap&&photoData){
+    cap.innerHTML='📍 <b>Exact location of this photo:</b> '+coords.lat+', '+coords.lng+'<br><span style="color:var(--muted);font-weight:500">The coordinates are stamped onto the photo itself. Tap the photo to open this spot on a map.</span>';
+    cap.style.display='block';
+    burnGeoStamp(coords);
+  }
   if(!pinLoc) setPin(coords.lat,coords.lng);
   return true;
 }
+function burnGeoStamp(coords){
+  if(!photoOrigUrl||!photoMeta) return;
+  const img=new Image();
+  img.onload=()=>{ try{
+    const cv=document.createElement('canvas'); cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+    const cx=cv.getContext('2d'); cx.drawImage(img,0,0);
+    const strip=Math.max(30,Math.round(cv.height*0.075));
+    cx.fillStyle='rgba(0,0,0,0.72)'; cx.fillRect(0,cv.height-strip,cv.width,strip);
+    cx.fillStyle='#ffffff'; cx.font='700 '+Math.round(strip*0.42)+'px Arial';
+    cx.fillText('📍 '+coords.lat+', '+coords.lng+'  ·  '+new Date().toLocaleString('en-IN'), Math.round(strip*0.35), cv.height-Math.round(strip*0.32));
+    photoData=cv.toDataURL('image/jpeg',0.88);
+    const p=document.getElementById('preview'); if(p) p.src=photoData;
+  }catch(e){} };
+  img.src=photoOrigUrl;
+}
+function photoTap(){
+  const g=(photoMeta&&photoMeta.geo)?photoMeta.geo:pinLoc;
+  if(g){ window.open('https://www.openstreetmap.org/?mlat='+g.lat+'&mlon='+g.lng+'#map=17/'+g.lat+'/'+g.lng,'_blank'); }
+  else toast('No location stamped yet — tap "Use My Current Location" or pin the spot on the map');
+}
 function stampGeoTag(){
   captureGeo(false,(coords,err)=>{
-    if(!applyGeo(coords,true)){
-      const gl=document.getElementById('geoLine');
-      if(gl) gl.textContent='📍 Location unavailable on this device — pin the spot on the map above so crews still get the exact place.';
-      showLocMsg(err);
-    } else hideLocMsg();
+    if(coords){ applyGeo(coords,true); hideLocMsg(); return; }
+    if(pinLoc){ applyGeo(pinLoc,true); const gl=document.getElementById('geoLine'); if(gl) gl.innerHTML='📍 <b>Photo geo-tagged from your map pin:</b> '+pinLoc.lat+', '+pinLoc.lng; return; }
+    const gl=document.getElementById('geoLine');
+    if(gl) gl.textContent='📍 Location unavailable on this device — pin the spot on the map above so crews still get the exact place.';
+    const cap=document.getElementById('geoCaption');
+    if(cap&&photoData){ cap.innerHTML='📍 <b>No location stamped yet.</b> Tap <b>🎯 Use My Current Location</b> above, or pin the spot on the map — the exact location will appear here and on the photo.'; cap.style.display='block'; }
+    showLocMsg(err);
   });
 }
 function useMyLocationPhoto(){
@@ -477,7 +507,8 @@ function useMyLocationPhoto(){
 }
 function handlePhotoFile(f){ if(!f) return; const r=new FileReader(); r.onload=ev=>setPhoto(ev.target.result); r.readAsDataURL(f); }
 function removePhoto(silent){
-  photoData=null; photoMeta=null;
+  photoData=null; photoMeta=null; photoOrigUrl=null;
+  const cap=document.getElementById('geoCaption'); if(cap) cap.style.display='none';
   const p=document.getElementById('preview'); if(p){ p.style.display='none'; p.removeAttribute('src'); }
   const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
   const rb=document.getElementById('removePhotoBtn'); if(rb) rb.style.display='none';
@@ -489,6 +520,7 @@ document.getElementById('photo').addEventListener('change',e=>handlePhotoFile(e.
 document.getElementById('photoCam').addEventListener('change',e=>handlePhotoFile(e.target.files[0]));
 let camStream=null;
 async function openCamera(){
+  if(navigator.geolocation){ try{ captureGeo(false,()=>{}); }catch(e){} }
   const panel=document.getElementById('camPanel');
   const fallback=()=>{ toast('Live camera not available on this device/browser — opening the camera / photo picker instead'); document.getElementById('photoCam').click(); };
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ fallback(); return; }
@@ -654,6 +686,7 @@ function showSection(v,anchor){
   document.querySelectorAll('.navlink').forEach(b=>b.classList.toggle('active',b.dataset.nav===v));
   const m=document.getElementById('navMenu'); if(m) m.style.display='none';
   if(v==='home') renderHome();
+  if(v==='report'&&navigator.geolocation){ try{ captureGeo(false,()=>{}); }catch(e){} }
   if(anchor){ const el=document.getElementById(anchor); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth'}),50); }
   else window.scrollTo({top:0,behavior:'smooth'});
 }
