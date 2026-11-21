@@ -16,7 +16,7 @@ Most teams build a form → AI label → list. FixFirst solves the *real* triage
 
 1. **Duplicate Cluster Engine** — Same pothole reported 12 times becomes 1 master ticket, not 12 buried tickets. Community count boosts priority and saves officer time (shown live in dashboard: "Duplicates Merged" + "Hours Saved").
 2. **Vulnerable-Zone Escalation** — A hazard near a School/Hospital is automatically more severe than the same hazard in an empty area. Context-aware severity, not keyword-only.
-3. **HazardEye Photo Verification** — Photo attached = verified credibility (+10 priority). Officers act on proof.
+3. **Photo Credibility Check** — Photo attached = +10 priority as a presence/credibility signal today. Honest scope: production adds a Vision API for actual hazard detection in the image; the prototype does not claim image analysis it doesn't do.
 4. **Explainable Priority Score 0–100** — Every ticket shows its breakdown: Severity (0-40) + Zone (8-20) + Community (0-20) + Photo (0/10) + Urgency (15). No black box — officers can defend the order to citizens/councillors.
 
 ## Features (All 5 Required + Extras)
@@ -27,7 +27,8 @@ Most teams build a form → AI label → list. FixFirst solves the *real* triage
 - [x] 5. Officer Dashboard sorted by Priority Score, filters by category/severity, status workflow Open→Assigned→Resolved
 - [x] Extra: Duplicate detection & merging, Priority breakdown, Crew Route button, Stats (Critical count, duplicates merged, time saved), 1-click judge demos
 - [x] Extra: **Vague-complaint handling** — "road bad" is NOT guessed; AI asks 3 clarifying follow-ups with 1-tap detail chips
-- [x] Extra: **SLA + auto-escalation** — Critical 4h / High 24h / Medium 3d / Low 7d; Critical & High escalate to Ward Engineer at half-SLA with citizen status update
+- [x] Extra: **SLA + REAL auto-escalation** — Critical 4h / High 24h / Medium 3d / Low 7d. Every Critical/High ticket carries a live countdown (demo clock compresses half-SLA to 2–4 min; production uses real hours). At zero — or via the 'Simulate half-SLA' button — status flips to ESCALATED → Ward Engineer, citizen notified. Not just a label: a state change you can watch.
+- [x] Extra: **Hybrid AI** — deterministic triage engine is the always-on, offline-safe default (designed via GenAI, see Prompt Log); the 'Verify with Live AI (beta)' button additionally calls a live external LLM when the network allows, and openly reports if it is unreachable — the fallback result stands either way.
 
 ## How to Run
 No install, no backend, no API key — works offline for a bulletproof live demo.
@@ -37,7 +38,7 @@ Open index.html in any browser
 python3 -m http.server 8000  → http://localhost:8000
 ```
 ## Demo Flow (2 minutes)
-1. Click **⚡ LIVE WIRE Near School** → Submit → Critical, BESCOM, Priority ~95
+1. Click **⚡ LIVE WIRE Near School** → Submit → Critical, BESCOM, Priority 90 (Severity 55 incl. danger bonus + Zone 20 + Urgency 15 = 90; with a photo it reaches 100)
 2. Click **🇮🇳 KANNADA Garbage** → Submit → Language detected Kannada, Waste, BBMP SWM
 3. Click **🔁 DUPLICATE Same Pothole** → Submit → "DUPLICATE DETECTED — Merged into CL-2026-1042, priority boosted" — this is the wow moment
 4. Scroll dashboard — tickets re-sort by priority, explain breakdown
