@@ -98,6 +98,19 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px}
 .core{border-left:3px solid var(--amber);padding:10px 14px;font-size:15px;line-height:1.65;background:rgba(255,255,255,.03);border-radius:0 12px 12px 0;margin-top:14px}
 @media(max-width:940px){.pgrid{grid-template-columns:1fr}}
+html{scroll-behavior:smooth}
+#complain{scroll-margin-top:84px;border-color:rgba(245,165,36,.45)}
+.cta-big{display:inline-block;margin-top:18px;background:var(--amber);color:#161006;font-weight:800;font-size:16px;padding:14px 22px;border-radius:999px;text-decoration:none;box-shadow:0 10px 30px rgba(245,165,36,.35)}
+.cta-big:hover{filter:brightness(1.07)}
+.cta-note{display:block;margin-top:9px;font-size:12.5px;color:var(--muted)}
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
+.step{border:1px solid rgba(245,165,36,.5);background:rgba(245,165,36,.08);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:700}
+.step span{color:var(--amber)}
+#complaint{min-height:104px;font-size:15px}
+.photobtns{display:flex;gap:10px;margin:4px 0 2px}
+.photobtn{flex:1;padding:13px 10px;border-radius:12px;border:1px solid var(--amber);background:var(--amber);color:#161006;font-weight:800;font-size:15px;cursor:pointer}
+.photobtn.alt{background:transparent;color:var(--ink)}
+.photobtn:hover{filter:brightness(1.07)}
 </style>
 </head>
 <body>
@@ -112,7 +125,8 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 <section class="bento">
 <div class="tile monument fx"><div class="kicker">CivicLens · AI Triage for Citizen Complaints</div>
 <h1>One issue.<br>One ticket.<br><em>Fixed first.</em></h1>
-<p>100 teams will build a complaint form. We fix the real failure: 40% of reports are duplicates, and a pothole near a school is not a pothole on an empty road. FixFirst merges, verifies and escalates — with a priority score an officer can defend.</p></div>
+<p>100 teams will build a complaint form. We fix the real failure: 40% of reports are duplicates, and a pothole near a school is not a pothole on an empty road. FixFirst merges, verifies and escalates — with a priority score an officer can defend.</p>
+<a class="cta-big" href="#complain">📣 Report a Problem</a><span class="cta-note">For citizens: 30 seconds, no sign-up — describe it, snap a photo, submit.</span></div>
 <div class="tile fx"><div class="num">01</div><h3>Incident Fusion Engine</h3><p>Complaints about the same real-world problem fuse into one Incident, scored on 4 signals: location, category, semantic similarity, time window. Strong match auto-merges. Weak match goes to a human — never a silent wrong merge.</p></div>
 <div class="tile fx"><div class="num">02</div><h3>Vulnerable-Zone Escalation</h3><p>Near a school or hospital, severity upgrades automatically. Context, not just keywords.</p></div>
 <div class="tile fx"><div class="num">03</div><h3>Vague? We Ask, Not Guess</h3><p>“Road bad” triggers 3 clarifying follow-ups with one-tap detail chips — judgment, not blind classification.</p></div>
@@ -121,8 +135,9 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 
 <div class="main">
 <!-- CITIZEN -->
-<div class="panel fx">
-<h2>Citizen Complaint</h2><p class="sub">English, ಕನ್ನಡ or हिन्दी — type it like a WhatsApp message. Add a photo and what is nearby. The triage runs in under two seconds, offline-safe.</p>
+<div class="panel fx" id="complain">
+<h2>Report a Problem</h2><p class="sub">Takes 30 seconds. No sign-up. Type in English, ಕನ್ನಡ or हिन्दी — just like a WhatsApp message — and the AI routes it to the right department for you.</p>
+<div class="steps"><span class="step"><span>1</span> · Describe it</span><span class="step"><span>2</span> · Snap a photo</span><span class="step"><span>3</span> · Submit — AI does the rest</span></div>
 <label>One-click demos for the jury</label>
 <div class="demo-btns">
 <button onclick="loadDemo('critical')">Live wire near school</button>
@@ -137,7 +152,20 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 <label>What is nearby? This changes priority</label>
 <select id="landmark"><option value="School">School / College</option><option value="Hospital">Hospital / Clinic</option><option value="Residential" selected>Residential Area</option><option value="Market">Market / Bus Stop</option><option value="Highway">Highway / Main Road</option><option value="WaterBody">Lake / Drinking Water Source</option></select>
 <label>Photo — optional, adds verification</label>
-<input type="file" id="photo" accept="image/*">
+<div class="photobtns">
+<button type="button" class="photobtn" onclick="openCamera()">📷 Take Photo</button>
+<button type="button" class="photobtn alt" onclick="document.getElementById('photo').click()">🖼 Upload Photo</button>
+</div>
+<input type="file" id="photo" accept="image/*" style="display:none">
+<input type="file" id="photoCam" accept="image/*" capture="environment" style="display:none">
+<div id="camPanel" style="display:none;margin-top:10px">
+<video id="camVideo" autoplay playsinline muted style="width:100%;border-radius:12px;border:1px solid var(--line);background:#000"></video>
+<div class="photobtns">
+<button type="button" class="photobtn" onclick="snapPhoto()">📸 Capture</button>
+<button type="button" class="photobtn alt" onclick="closeCamera()">Cancel</button>
+</div>
+<p style="font-size:12px;color:var(--muted);line-height:1.5">Your camera stays on your device — the photo is used only for this complaint.</p>
+</div>
 <img id="preview" class="photo" style="display:none">
 <div id="photoCheck" style="display:none;font-size:13px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-top:8px"></div>
 <div id="aiResult"></div>
@@ -288,16 +316,33 @@ function photoCheckText(m){
   const sharp=m.sharp<80?'Soft / blurry':'Sharp';
   return m.w+'×'+m.h+' · Lighting: '+light+' ('+m.bright+'/255) · Sharpness: '+sharp+(m.flags.length?'<br>⚠ '+m.flags.join('<br>⚠ '):'<br>✓ No quality issues detected');
 }
-document.getElementById('photo').addEventListener('change',e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=async ev=>{
-    photoData=ev.target.result; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
-    photoMeta=await analyzePhoto(photoData);
-    const pc=document.getElementById('photoCheck');
-    if(pc&&photoMeta){ pc.innerHTML='<b>Photo Evidence Check</b> (on-device, automated): '+photoCheckText(photoMeta)+'<br><span style="color:var(--muted)">Quality analysis only — hazard content detection is the production Vision step. Photo adds +10 credibility.</span>'; pc.style.display='block'; }
-    toast('Photo attached: +10 credibility — evidence quality check '+(photoMeta?('done: '+(photoMeta.flags.length?photoMeta.flags.length+' flag(s)':'clean')):'unavailable'));
-  }; r.readAsDataURL(f);
-});
+async function setPhoto(dataUrl){
+  photoData=dataUrl; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
+  photoMeta=await analyzePhoto(photoData);
+  const pc=document.getElementById('photoCheck');
+  if(pc&&photoMeta){ pc.innerHTML='<b>Photo Evidence Check</b> (on-device, automated): '+photoCheckText(photoMeta)+'<br><span style="color:var(--muted)">Quality analysis only — hazard content detection is the production Vision step. Photo adds +10 credibility.</span>'; pc.style.display='block'; }
+  toast('Photo attached: +10 credibility — evidence quality check '+(photoMeta?('done: '+(photoMeta.flags.length?photoMeta.flags.length+' flag(s)':'clean')):'unavailable'));
+}
+function handlePhotoFile(f){ if(!f) return; const r=new FileReader(); r.onload=ev=>setPhoto(ev.target.result); r.readAsDataURL(f); }
+document.getElementById('photo').addEventListener('change',e=>handlePhotoFile(e.target.files[0]));
+document.getElementById('photoCam').addEventListener('change',e=>handlePhotoFile(e.target.files[0]));
+let camStream=null;
+async function openCamera(){
+  const panel=document.getElementById('camPanel');
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ document.getElementById('photoCam').click(); return; }
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    document.getElementById('camVideo').srcObject=camStream; panel.style.display='block';
+  }catch(e){ document.getElementById('photoCam').click(); }
+}
+function closeCamera(){ if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; } const panel=document.getElementById('camPanel'); if(panel) panel.style.display='none'; }
+function snapPhoto(){
+  const v=document.getElementById('camVideo'); if(!v||!v.videoWidth) return;
+  const cv=document.createElement('canvas'); cv.width=v.videoWidth; cv.height=v.videoHeight;
+  cv.getContext('2d').drawImage(v,0,0);
+  const url=cv.toDataURL('image/jpeg',0.85);
+  closeCamera(); setPhoto(url);
+}
 const CATS={
  Roads:{dept:'BBMP — Roads & Infrastructure',keys:['pothole','road','tar','asphalt','speed breaker','footpath','ಗುಂಡಿ','ರಸ್ತೆ','गड्ढा','सड़क','gundi','sadak','hole in road','broken road','accident']},
  Waste:{dept:'BBMP — Solid Waste Management (SWM)',keys:['garbage','waste','dustbin','trash','litter','smell','ಕಸ','कचरा','kasa','kachra','overflowing bin','dump']},
@@ -405,7 +450,7 @@ function submitComplaint(){
     document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.<br><button onclick="liveAICheck()">Verify with Live AI (beta)</button><div id="liveAI" style="margin-top:8px"></div></div>`;
     toast(`New ticket ${ticket.id} — ${t.severity} · ${t.category} · Priority ${t.priority}/100`);
   }
-  photoData=null; photoMeta=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value=''; const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
+  photoData=null; photoMeta=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value=''; document.getElementById('photoCam').value=''; closeCamera(); const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
   render();
 }
 
