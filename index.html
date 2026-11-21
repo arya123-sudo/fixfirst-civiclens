@@ -78,6 +78,26 @@ textarea{min-height:112px;resize:vertical} textarea:focus,select:focus{outline:2
 footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);font-size:12px;line-height:1.7}
 .kannada{font-family:"Noto Sans Kannada",Inter,sans-serif}
 @media(max-width:940px){.main{grid-template-columns:1fr}.bento{grid-template-columns:1fr 1fr}.tile.monument{grid-column:span 2}.stats{grid-template-columns:1fr 1fr}}
+.pitch{margin-top:44px}
+.pitch h2{font-family:"Space Grotesk",Inter,sans-serif;font-size:clamp(22px,3.4vw,32px);line-height:1.15;margin:0 0 6px}
+.pitch .sub{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 16px;max-width:760px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pcard{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(255,255,255,.03)}
+.pcard h3{margin:0 0 6px;font-size:15px;color:var(--amber)}
+.pcard p{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink)}
+.pcard .num{font-family:"Space Grotesk",sans-serif;font-size:12px;letter-spacing:.14em;color:var(--muted)}
+.ptable{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 14px}
+.ptable th,.ptable td{border:1px solid var(--line);padding:9px 12px;text-align:left}
+.ptable th{color:var(--amber);font-family:"Space Grotesk",sans-serif;font-size:12.5px;letter-spacing:.08em}
+.bands{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.band{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600}
+.band b{color:var(--amber)}
+.mathbox{border:1px solid rgba(245,165,36,.55);background:rgba(245,165,36,.07);border-radius:14px;padding:16px;font-size:14.5px;line-height:1.7}
+.mathbox b{color:var(--amber)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px}
+.core{border-left:3px solid var(--amber);padding:10px 14px;font-size:15px;line-height:1.65;background:rgba(255,255,255,.03);border-radius:0 12px 12px 0;margin-top:14px}
+@media(max-width:940px){.pgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -142,6 +162,92 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 </div>
 </div>
 </div>
+
+<section class="pitch" id="problem">
+<h2>The Problem — Cities Don't Lack Complaints. They Lack Clarity.</h2>
+<p class="sub">Municipal authorities receive thousands of complaints through apps, WhatsApp and social media. The failure is not collection — it is understanding.</p>
+<div class="pgrid">
+<div class="pcard"><h3>Scattered Reports</h3><p>Complaints arrive through multiple channels with no unified view.</p></div>
+<div class="pcard"><h3>Unstructured Data</h3><p>Reports are vague and submitted in different languages and scripts.</p></div>
+<div class="pcard"><h3>Incorrect Routing</h3><p>Complaints reach the wrong departments and bounce between desks.</p></div>
+<div class="pcard"><h3>Duplicate Reports</h3><p>Multiple citizens report the same incident as separate tickets.</p></div>
+<div class="pcard"><h3>Poor Prioritization</h3><p>Critical issues get buried under routine complaints, first-come-first-served.</p></div>
+<div class="pcard"><h3>Vague Reports</h3><p>&ldquo;Road bad&rdquo; carries no actionable detail — most systems guess anyway.</p></div>
+</div>
+<div class="core"><b>Core problem:</b> authorities see individual complaints instead of understanding the actual civic incidents behind them.</div>
+</section>
+
+<section class="pitch" id="solution">
+<h2>The Solution — From Citizen Reports to Actionable Incidents</h2>
+<p class="sub">The same workflow you can run live in the demo above:</p>
+<div class="pgrid">
+<div class="pcard"><p class="num">STEP 1</p><h3>Citizen Input</h3><p>English, <span class="kannada">ಕನ್ನಡ</span> or हिन्दी complaint, with optional photo and what is nearby.</p></div>
+<div class="pcard"><p class="num">STEP 2</p><h3>AI Understanding</h3><p>Language identification, classification into 6 categories, severity with a one-line reason, department routing (BBMP · BWSSB · BESCOM).</p></div>
+<div class="pcard"><p class="num">STEP 3</p><h3>Photo Credibility Signal</h3><p>An attached photo adds +10 priority as a presence/credibility signal. Honest scope: production adds a Vision API for hazard detection in the image.</p></div>
+<div class="pcard"><p class="num">STEP 4</p><h3>Incident Fusion</h3><p>Complaints describing the same real-world problem fuse into one Incident with supporting reports.</p></div>
+<div class="pcard"><p class="num">STEP 5</p><h3>Contextual Risk Boost</h3><p>Surroundings — a school, a hospital — re-weight severity and priority.</p></div>
+<div class="pcard"><p class="num">STEP 6</p><h3>Municipal Dashboard</h3><p>Unified incidents ranked by explainable priority, with SLA countdowns and auto-escalation to the Ward Engineer.</p></div>
+</div>
+<div class="core"><b>Output:</b> structured, explainable and prioritised civic incidents — not a pile of tickets.</div>
+</section>
+
+<section class="pitch" id="fusion">
+<h2>Innovation 1 — Incident Fusion</h2>
+<p class="sub">One real-world problem. Multiple reports. One unified Incident. Every new complaint is scored against open Incidents on four signals:</p>
+<table class="ptable">
+<tr><th>Signal</th><th>Weight</th><th>What it evaluates</th></tr>
+<tr><td>Location</td><td><b>30</b></td><td>Same ward / area</td></tr>
+<tr><td>Category</td><td><b>15</b></td><td>Same type of civic issue</td></tr>
+<tr><td>Semantic Similarity</td><td><b>40</b></td><td>Meaning overlap of the complaint text</td></tr>
+<tr><td>Time Window</td><td><b>15</b></td><td>Reported within the active incident window</td></tr>
+</table>
+<div class="bands">
+<span class="band"><b>75+</b> &nbsp;Auto-merge as a supporting report</span>
+<span class="band"><b>50–74</b> &nbsp;Officer Review Queue — a human decides</span>
+<span class="band"><b>&lt;50</b> &nbsp;New Incident</span>
+</div>
+<p class="sub">Life-safety rule: a Critical hazard always raises its own Incident immediately — fusion never delays it. Live proof on this page: the duplicate pothole fuses at <b>84/100</b> and its priority rises to 93; the Kannada garbage report scores <b>60/100</b> across languages and waits for a human instead of being silently merged.</p>
+</section>
+
+<section class="pitch" id="risk">
+<h2>Innovation 2 — Contextual Risk Boost</h2>
+<p class="sub">The same issue. Different surroundings. Different levels of risk. FixFirst evaluates what is near the incident:</p>
+<div class="chips">
+<span class="chip">School / College — exposure of children</span>
+<span class="chip">Hospital / Clinic — patients &amp; emergency access</span>
+<span class="chip">Market / Bus Stop — public exposure</span>
+<span class="chip">Highway / Main Road — traffic &amp; accident risk</span>
+<span class="chip">Lake / Water Source — environmental impact</span>
+</div>
+<div class="mathbox">Explainable priority, worked example (run it above): a live wire near a school scores <b>Severity 55 + Zone 20 + Urgency 15 = 90/100</b> — and reaches 100 with a photo attached.<br>Full formula: <b>Priority = Severity + Zone + Community + Photo + Urgency</b> — every point is shown on the ticket, so an officer can defend the order to citizens and councillors.</div>
+</section>
+
+<section class="pitch" id="tech">
+<h2>Technology &amp; Implementation</h2>
+<p class="sub">Built for practical civic intelligence — and for a demo that cannot fail on stage:</p>
+<table class="ptable">
+<tr><th>Technology</th><th>Purpose</th></tr>
+<tr><td>Single-file HTML / CSS / JS</td><td>The whole prototype — zero install, no backend, works fully offline</td></tr>
+<tr><td>Deterministic triage engine (3 languages)</td><td>Classification, severity, routing and fusion scoring — designed via GenAI prompting</td></tr>
+<tr><td>Three.js + GSAP</td><td>Design and motion layer (ThreeUI / TasteSkill / 21st.dev direction) — guarded, so triage survives any CDN failure</td></tr>
+<tr><td>Hybrid Live AI (optional)</td><td>&ldquo;Verify with Live AI&rdquo; calls a live LLM with a 6-second timeout; if unreachable, it says so and the deterministic result stands</td></tr>
+<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (14 entries) in the GitHub repo</td></tr>
+</table>
+<div class="core"><b>Human + AI:</b> the AI analyses and recommends. Municipal officials verify and make the final decisions.</div>
+</section>
+
+<section class="pitch" id="impact">
+<h2>Impact &amp; Vision</h2>
+<div class="pgrid">
+<div class="pcard"><h3>Unified Visibility</h3><p>Related complaints become organized incidents, not scattered tickets.</p></div>
+<div class="pcard"><h3>Smarter Prioritization</h3><p>Potentially dangerous issues receive attention proportionate to their risk.</p></div>
+<div class="pcard"><h3>Reduced Duplication</h3><p>Less repetitive handling — the dashboard counts reports fused and officer hours saved.</p></div>
+<div class="pcard"><h3>Better Decisions</h3><p>Explainable AI recommendations support officials instead of replacing them.</p></div>
+<div class="pcard"><h3>Scalability</h3><p>Extendable across wards, cities and regional languages — WhatsApp intake and GIS proximity are the production steps.</p></div>
+<div class="pcard"><h3>Our Vision</h3><p>A city where every complaint is understood, every incident is visible, and every urgent issue gets the attention it deserves.</p></div>
+</div>
+<div class="core" style="text-align:center;font-family:'Space Grotesk',sans-serif"><b>FixFirst</b> — From Scattered Complaints to Unified Civic Action. · Team Neon Pulse</div>
+</section>
 
 <footer>FixFirst — Team Neon Pulse · Tech Habba “Prompt to Product”, Acharya Institute of Technology · Design direction informed by TasteSkill (one palette, type as layout, quiet dashboard panels) · Motion: GSAP · 3D background: Three.js (ThreeUI-style particle field) · Component patterns (bento grid, shimmer button, number ticker, score ring): 21st.dev · All triage logic original, built in the event window. Works fully offline if CDNs are unreachable — animations degrade, triage never does.</footer>
 </div>
