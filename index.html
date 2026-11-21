@@ -12,12 +12,12 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 /* TasteSkill direction: one palette — warm dark ink + single amber accent. Colour is spent on DATA (severity), not decoration. Quiet panels, aligned figures, huge display type. */
-:root{--bg:#0b0e12;--panel:#12161d;--panel2:#171d27;--line:#232b38;--ink:#e8e6e1;--muted:#9aa3af;--amber:#f5a524;--red:#f31260;--orange:#f97316;--yellow:#eab308;--green:#17c964}
+:root{--bg:#ffffff;--panel:#ffffff;--panel2:#f7f4ee;--line:#e4ded2;--ink:#1d1a16;--muted:#6f6a5f;--amber:#d97706;--red:#e0115f;--orange:#ea580c;--yellow:#ca8a04;--green:#159a4c}
 *{box-sizing:border-box} html{scroll-behavior:smooth}
 body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
-#bg3d{position:fixed;inset:0;z-index:0;opacity:.55;pointer-events:none}
+#bg3d{display:none}
 .wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 20px}
-header{position:sticky;top:0;z-index:20;background:rgba(11,14,18,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .header-in{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 .brand{font-family:"Space Grotesk";font-weight:700;font-size:22px;letter-spacing:-.02em}.brand em{font-style:normal;color:var(--amber)}
 .teamline{font-size:12px;color:var(--muted);margin-top:2px}
@@ -25,9 +25,9 @@ header{position:sticky;top:0;z-index:20;background:rgba(11,14,18,.82);backdrop-f
 .dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.6s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(243,18,96,.5)}70%{box-shadow:0 0 0 9px rgba(243,18,96,0)}100%{box-shadow:0 0 0 0 rgba(243,18,96,0)}}
 /* Bento hero — 21st.dev pattern: one monument tile + specimen tiles, edge to edge */
-.bento{display:grid;grid-template-columns:1.6fr 1fr 1fr;grid-auto-rows:minmax(120px,auto);gap:12px;margin:26px 0 8px}
+.bento{display:grid;grid-template-columns:1fr;gap:12px;margin:26px 0 8px}
 .tile{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:24px;position:relative;overflow:hidden}
-.tile.monument{grid-row:span 2;display:flex;flex-direction:column;justify-content:flex-end;min-height:300px}
+.tile.monument{display:flex;flex-direction:column;justify-content:flex-end}
 .monument h1{font-family:"Space Grotesk";font-size:clamp(44px,6vw,76px);line-height:.95;margin:0;letter-spacing:-.03em}
 .monument h1 em{font-style:normal;color:var(--amber)}
 .monument p{color:var(--muted);line-height:1.65;max-width:52ch;margin:16px 0 0;font-size:15px}
@@ -40,7 +40,7 @@ header{position:sticky;top:0;z-index:20;background:rgba(11,14,18,.82);backdrop-f
 .panel h2{font-family:"Space Grotesk";margin:0 0 6px;font-size:20px;letter-spacing:-.01em}
 .sub{font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 8px}
 label{font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin:16px 0 7px}
-textarea,select,input[type=file]{width:100%;padding:13px;background:#0d1117;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink)}
+textarea,select,input[type=file]{width:100%;padding:13px;background:#ffffff;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink)}
 textarea{min-height:112px;resize:vertical} textarea:focus,select:focus{outline:2px solid var(--amber);border-color:transparent}
 .demo-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 .demo-btns button{padding:11px 8px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:600;font-size:12px;cursor:pointer;line-height:1.4;transition:.2s}
@@ -57,7 +57,7 @@ textarea{min-height:112px;resize:vertical} textarea:focus,select:focus{outline:2
 .stat.crit b{color:var(--red)} .stat.dup b{color:var(--green)} .stat.saved b{color:var(--amber)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
 .filters button{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:600;cursor:pointer;font-size:13px}
-.filters button.active{background:var(--ink);color:#0b0e12;border-color:var(--ink)}
+.filters button.active{background:var(--ink);color:#ffffff;border-color:var(--ink)}
 .ticket{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:12px}
 .t-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .t-id{font-weight:700;font-size:13px;color:var(--muted);letter-spacing:.04em}
@@ -76,10 +76,10 @@ textarea{min-height:112px;resize:vertical} textarea:focus,select:focus{outline:2
 .result{border-radius:14px;padding:15px;margin-top:16px;line-height:1.65;font-size:14px;border:1px solid}
 .result.ok{background:rgba(23,201,100,.08);border-color:rgba(23,201,100,.45)} .result.dup{background:rgba(243,18,96,.08);border-color:rgba(243,18,96,.5)} .result.vague{background:rgba(245,165,36,.08);border-color:rgba(245,165,36,.55)}
 .result button{margin:6px 4px 0 0;padding:8px 10px;border-radius:9px;border:1px solid var(--amber);background:transparent;color:var(--ink);font-weight:600;cursor:pointer}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--ink);color:#0b0e12;padding:14px 18px;border-radius:12px;font-weight:700;max-width:92%;display:none;z-index:60;box-shadow:0 16px 40px rgba(0,0,0,.5);line-height:1.5;font-size:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--ink);color:#ffffff;padding:14px 18px;border-radius:12px;font-weight:700;max-width:92%;display:none;z-index:60;box-shadow:0 16px 40px rgba(0,0,0,.28);line-height:1.5;font-size:14px}
 footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);font-size:12px;line-height:1.7}
 .kannada{font-family:"Noto Sans Kannada",Inter,sans-serif}
-@media(max-width:940px){.main{grid-template-columns:1fr}.bento{grid-template-columns:1fr 1fr}.tile.monument{grid-column:span 2}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:940px){.main{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
 .pitch{margin-top:44px}
 .pitch h2{font-family:"Space Grotesk",Inter,sans-serif;font-size:clamp(22px,3.4vw,32px);line-height:1.15;margin:0 0 6px}
 .pitch .sub{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 16px;max-width:760px}
@@ -100,6 +100,29 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px}
 .core{border-left:3px solid var(--amber);padding:10px 14px;font-size:15px;line-height:1.65;background:rgba(255,255,255,.03);border-radius:0 12px 12px 0;margin-top:14px}
 @media(max-width:940px){.pgrid{grid-template-columns:1fr}}
+/* Sections & navigation — simple white multi-section layout */
+.nav{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
+.navlink{background:none;border:none;font:inherit;font-weight:600;font-size:14px;color:var(--muted);padding:8px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.navlink:hover{color:var(--ink);background:var(--panel2)}
+.navlink.active{color:var(--amber);background:var(--panel2)}
+.navdrop{position:relative}
+#navMenu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.14);min-width:240px;display:none;z-index:60;padding:6px}
+#navMenu button{display:block;width:100%;text-align:left;background:none;border:none;font:inherit;font-size:14px;font-weight:600;color:var(--ink);padding:9px 12px;border-radius:8px;cursor:pointer}
+#navMenu button:hover{background:var(--panel2)}
+#homeStrip{display:none}
+body[data-view="home"] #homeStrip{display:block}
+body[data-view="home"] .main,body[data-view="home"] .pitch{display:none}
+body[data-view="report"] .bento,body[data-view="report"] .pitch,body[data-view="report"] #officerBlock{display:none}
+body[data-view="report"] .main{grid-template-columns:minmax(0,660px);justify-content:center}
+body[data-view="dashboard"] .bento,body[data-view="dashboard"] .pitch,body[data-view="dashboard"] #complain{display:none}
+body[data-view="dashboard"] .main{grid-template-columns:1fr}
+body[data-view="info"] .bento,body[data-view="info"] .main{display:none}
+.homecard{text-align:left;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;cursor:pointer;font:inherit}
+.homecard b{display:block;font-family:"Space Grotesk";font-size:16px;margin-bottom:6px;color:var(--ink)}
+.homecard span{font-size:13px;color:var(--muted);line-height:1.55}
+.homecard:hover{border-color:var(--amber)}
+.homeCards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+@media(max-width:760px){.homeCards{grid-template-columns:1fr}}
 html{scroll-behavior:smooth}
 #complain{scroll-margin-top:84px;border-color:rgba(245,165,36,.45)}
 .cta-big{display:inline-block;margin-top:18px;background:var(--amber);color:#161006;font-weight:800;font-size:16px;padding:14px 22px;border-radius:999px;text-decoration:none;box-shadow:0 10px 30px rgba(245,165,36,.35)}
@@ -115,10 +138,25 @@ html{scroll-behavior:smooth}
 .photobtn:hover{filter:brightness(1.07)}
 </style>
 </head>
-<body>
+<body data-view="home">
 <canvas id="bg3d"></canvas>
 <header><div class="header-in">
 <div><div class="brand">Fix<em>First</em></div><div class="teamline">Team Neon Pulse — Rohan P (Leader) · Arya Yaligar · Shiva Prasad · Tech Habba, Acharya</div></div>
+<nav class="nav">
+<button class="navlink active" data-nav="home" onclick="showSection('home')">Home</button>
+<button class="navlink" data-nav="report" onclick="showSection('report')">Report a Problem</button>
+<button class="navlink" data-nav="dashboard" onclick="showSection('dashboard')">Officer Dashboard</button>
+<button class="navlink" data-nav="track" onclick="navTrack()">Track Complaint</button>
+<div class="navdrop"><button class="navlink" data-nav="info" onclick="toggleMenu(event)">Know More ▾</button>
+<div id="navMenu">
+<button onclick="showSection('info','problem')">The Problem</button>
+<button onclick="showSection('info','solution')">How It Works</button>
+<button onclick="showSection('info','fusion')">Innovation — Incident Fusion</button>
+<button onclick="showSection('info','risk')">Innovation — Risk Boost</button>
+<button onclick="showSection('info','tech')">Technology</button>
+<button onclick="showSection('info','impact')">Impact &amp; Vision</button>
+</div></div>
+</nav>
 <div class="live"><span class="dot"></span> LIVE TRIAGE ENGINE</div>
 </div></header>
 
@@ -128,12 +166,22 @@ html{scroll-behavior:smooth}
 <div class="tile monument fx"><div class="kicker">CivicLens · AI Triage for Citizen Complaints</div>
 <h1>One issue.<br>One ticket.<br><em>Fixed first.</em></h1>
 <p>100 teams will build a complaint form. We fix the real failure: 40% of reports are duplicates, and a pothole near a school is not a pothole on an empty road. FixFirst merges, verifies and escalates — with a priority score an officer can defend.</p>
-<a class="cta-big" href="#complain">📣 Report a Problem</a><span class="cta-note">For citizens: 30 seconds, no sign-up — describe it, snap a photo, submit.</span></div>
-<div class="tile fx"><div class="num">01</div><h3>Incident Fusion Engine</h3><p>Complaints about the same real-world problem fuse into one Incident, scored on 4 signals: location, category, semantic similarity, time window. Strong match auto-merges. Weak match goes to a human — never a silent wrong merge.</p></div>
-<div class="tile fx"><div class="num">02</div><h3>Vulnerable-Zone Escalation</h3><p>Near a school or hospital, severity upgrades automatically. Context, not just keywords.</p></div>
-<div class="tile fx"><div class="num">03</div><h3>Vague? We Ask, Not Guess</h3><p>“Road bad” triggers 3 clarifying follow-ups with one-tap detail chips — judgment, not blind classification.</p></div>
-<div class="tile fx"><div class="num">04</div><h3>Explainable Score 0–100</h3><p>Severity + Zone + Community + Photo. Every point shown. Plus SLA timers with auto-escalation to the Ward Engineer.</p></div>
+<a class="cta-big" href="#" onclick="showSection('report');return false;">📣 Report a Problem</a><span class="cta-note">For citizens: 30 seconds, no sign-up — describe it, snap a photo, submit.</span></div>
 </section>
+
+<div id="homeStrip">
+<div class="stats" style="margin-top:14px">
+<div class="stat"><b id="hTotal">0</b><span>Incidents on the board</span></div>
+<div class="stat crit"><b id="hCrit">0</b><span>Critical open</span></div>
+<div class="stat dup"><b id="hFused">0</b><span>Duplicate reports fused</span></div>
+<div class="stat saved"><b>Live</b><span>AI triage engine</span></div>
+</div>
+<div class="homeCards">
+<button class="homecard" onclick="showSection('report')"><b>📣 Report a Problem</b><span>30 seconds, no sign-up. Describe it, snap a photo, pin the exact location on the map.</span></button>
+<button class="homecard" onclick="navTrack()"><b>🔎 Track Your Complaint</b><span>Enter your Ticket ID and see live status, department, priority and SLA escalation.</span></button>
+<button class="homecard" onclick="showSection('dashboard')"><b>🛠️ Officer Dashboard</b><span>Incidents ranked by explainable priority — with fusion, the Review Queue and SLA timers.</span></button>
+</div>
+</div>
 
 <div class="main">
 <!-- CITIZEN -->
@@ -156,7 +204,7 @@ html{scroll-behavior:smooth}
 <label>Exact location — pin it on the map (optional, helps crews reach the exact spot)</label>
 <button type="button" class="photobtn alt" style="width:100%" onclick="toggleMap()">📍 Pin Exact Location on Map</button>
 <div id="mapWrap" style="display:none;margin-top:8px">
-<div id="map" style="height:260px;border-radius:12px;border:1px solid var(--line);z-index:1;background:#0e1116"></div>
+<div id="map" style="height:260px;border-radius:12px;border:1px solid var(--line);z-index:1;background:#edf0f2"></div>
 <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
 <button type="button" class="photobtn alt" style="flex:0 0 auto;padding:9px 14px" onclick="useMyLocation()">🎯 Use My Location</button>
 <span id="pinText" style="font-size:13px;color:var(--muted)">Tap anywhere on the map to drop the pin.</span>
@@ -194,7 +242,7 @@ html{scroll-behavior:smooth}
 </div>
 
 <!-- OFFICER -->
-<div>
+<div id="officerBlock">
 <div class="stats">
 <div class="stat fx"><b data-count id="sTotal">0</b><span>Total Tickets</span></div>
 <div class="stat crit fx"><b data-count id="sCrit">0</b><span>Critical</span></div>
@@ -279,9 +327,9 @@ html{scroll-behavior:smooth}
 <tr><td>Single-file HTML / CSS / JS</td><td>The whole prototype — zero install, no backend, works fully offline</td></tr>
 <tr><td>Deterministic triage engine (3 languages)</td><td>Classification, severity, routing and fusion scoring — designed via GenAI prompting</td></tr>
 <tr><td>Leaflet + OpenStreetMap</td><td>Exact-location pinning — tap-to-pin or one-tap GPS; coordinates stored on the ticket with a view-on-map link for crews; degrades gracefully offline</td></tr>
-<tr><td>Three.js + GSAP</td><td>Design and motion layer (ThreeUI / TasteSkill / 21st.dev direction) — guarded, so triage survives any CDN failure</td></tr>
+<tr><td>GSAP</td><td>Motion layer — guarded, so triage survives any CDN failure; the layout itself is a clean, simple white interface</td></tr>
 <tr><td>Hybrid Live AI (optional)</td><td>&ldquo;Verify with Live AI&rdquo; calls a live LLM with a 6-second timeout; if unreachable, it says so and the deterministic result stands</td></tr>
-<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (19 entries) in the GitHub repo</td></tr>
+<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (20 entries) in the GitHub repo</td></tr>
 </table>
 <div class="core"><b>Human + AI:</b> the AI analyses and recommends. Municipal officials verify and make the final decisions.</div>
 </section>
@@ -299,7 +347,7 @@ html{scroll-behavior:smooth}
 <div class="core" style="text-align:center;font-family:'Space Grotesk',sans-serif"><b>FixFirst</b> — From Scattered Complaints to Unified Civic Action. · Team Neon Pulse</div>
 </section>
 
-<footer>FixFirst — Team Neon Pulse · Tech Habba “Prompt to Product”, Acharya Institute of Technology · Design direction informed by TasteSkill (one palette, type as layout, quiet dashboard panels) · Motion: GSAP · 3D background: Three.js (ThreeUI-style particle field) · Component patterns (bento grid, shimmer button, number ticker, score ring): 21st.dev · All triage logic original, built in the event window. Works fully offline if CDNs are unreachable — animations degrade, triage never does.</footer>
+<footer>FixFirst — Team Neon Pulse · Tech Habba “Prompt to Product”, Acharya Institute of Technology · All triage logic original, built in the event window. Works fully offline if CDNs are unreachable.</footer>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -452,7 +500,7 @@ function loadDemo(type){
   if(type==='kannada'){ document.getElementById('complaint').value='ನಮ್ಮ ಮನೆ ಹತ್ತಿರ ಕಸ ತುಂಬಿ ತುಳುಕುತ್ತಿದೆ, 4 ದಿನದಿಂದ ತೆಗೆಯಲಿಲ್ಲ, ತುಂಬಾ ವಾಸನೆ ಬರುತ್ತಿದೆ'; document.getElementById('landmark').value='Residential'; document.getElementById('location').value='Dasarahalli'; }
   if(type==='duplicate'){ document.getElementById('complaint').value='Big pothole near Acharya main gate, bikes falling, please fix urgently'; document.getElementById('landmark').value='School'; document.getElementById('location').value='Soladevanahalli — Acharya Gate'; }
   if(type==='vague'){ document.getElementById('complaint').value='road bad'; document.getElementById('landmark').value='Residential'; }
-  window.scrollTo({top:document.querySelector('.main').offsetTop-70,behavior:'smooth'}); toast('Demo loaded — now tap Submit & Run AI Triage');
+  document.getElementById('complain').scrollIntoView({behavior:'smooth'}); toast('Demo loaded — now tap Submit & Run AI Triage');
 }
 
 function fusionScore(ex,text,category,loc){
@@ -463,12 +511,12 @@ function fusionScore(ex,text,category,loc){
   return {locPts,catPts,semPts,timePts,total:locPts+catPts+semPts+timePts};
 }
 let pendingFusion=null;
-function applyMerge(dup){ dup.duplicates++; dupMergedTotal++; dup.breakdown.communityPts=Math.min(20,dup.breakdown.communityPts+5); dup.priority=Math.min(100,dup.priority+5); }
+function applyMerge(dup,coords){ dup.duplicates++; dupMergedTotal++; dup.breakdown.communityPts=Math.min(20,dup.breakdown.communityPts+5); dup.priority=Math.min(100,dup.priority+5); if(coords&&!dup.coords) dup.coords=coords; }
 function createIncident(text,loc,land,t,photo,meta,coords){
   const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photo,photoMeta:meta||null,coords:coords||null,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
   tickets.unshift(ticket); lastComplaint=text; return ticket;
 }
-function mergePending(){ if(!pendingFusion) return; const dup=pendingFusion.candidate; applyMerge(dup); toast('Officer merged it into '+dup.id+' — this Incident now has '+dup.duplicates+' supporting reports, priority '+dup.priority+'/100.'); pendingFusion=null; render(); }
+function mergePending(){ if(!pendingFusion) return; const dup=pendingFusion.candidate; applyMerge(dup,pendingFusion.coords); toast('Officer merged it into '+dup.id+' — this Incident now has '+dup.duplicates+' supporting reports, priority '+dup.priority+'/100.'); pendingFusion=null; render(); }
 function separatePending(){ if(!pendingFusion) return; const tk=createIncident(pendingFusion.text,pendingFusion.loc,pendingFusion.land,pendingFusion.t,pendingFusion.photo,pendingFusion.meta,pendingFusion.coords); toast('Kept separate — new Incident '+tk.id+' created by officer decision.'); pendingFusion=null; render(); }
 function renderReview(){
   const q=document.getElementById('reviewQueue'); if(!q) return;
@@ -493,22 +541,44 @@ function submitComplaint(){
   let best=null,bestF=null; for(const ex of tickets){ if(ex.status==='Resolved') continue; const f=fusionScore(ex,text,t.category,loc); if(!bestF||f.total>bestF.total){bestF=f;best=ex} }
   if(bestF && t.severity==='Critical' && best.severity!=='Critical') bestF=null; // life-safety rule: a Critical hazard always raises its own Incident immediately — fusion never delays it
   if(bestF && bestF.total>=75){ const dup=best;
-    applyMerge(dup);
-    document.getElementById('aiResult').innerHTML=`<div class="result dup"><b>INCIDENT FUSION — Auto-Merged.</b><br>4 signals matched <b>${dup.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time window ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (75+ = auto-merge). Your report is now a supporting report on that Incident, not a buried duplicate.<br><b>Community reports: ${dup.duplicates} citizens</b> · Priority boosted to <b>${dup.priority}/100</b><br>Officer time saved — and the issue now ranks higher.</div>`;
+    applyMerge(dup,pinLoc);
+    document.getElementById('aiResult').innerHTML=`<div class="result dup"><b>INCIDENT FUSION — Auto-Merged.</b><br>4 signals matched <b>${dup.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time window ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (75+ = auto-merge). Your report is now a supporting report on that Incident, not a buried duplicate.<br><b>Community reports: ${dup.duplicates} citizens</b> · Priority boosted to <b>${dup.priority}/100</b><br>Officer time saved — and the issue now ranks higher.<br><button onclick="showSection('dashboard')">View on Officer Dashboard →</button></div>`;
     toast(`Incident Fusion: auto-merged into ${dup.id} at ${bestF.total}/100 — priority now ${dup.priority}/100.`);
   } else if(bestF && bestF.total>=50){
     pendingFusion={text,loc,land,t,photo:photoData,meta:photoMeta,coords:pinLoc,candidate:best,f:bestF};
-    document.getElementById('aiResult').innerHTML=`<div class="result vague"><b>INCIDENT FUSION — Possible match. A human decides.</b><br>Signals vs <b>${best.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (50-74 = human review, never a silent wrong merge).<br>It is waiting in the officer <b>Review Queue</b> on the dashboard: Merge, or Keep Separate.</div>`;
+    document.getElementById('aiResult').innerHTML=`<div class="result vague"><b>INCIDENT FUSION — Possible match. A human decides.</b><br>Signals vs <b>${best.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (50-74 = human review, never a silent wrong merge).<br>It is waiting in the officer <b>Review Queue</b> on the dashboard: Merge, or Keep Separate.<br><button onclick="showSection('dashboard')">Open Officer Dashboard →</button></div>`;
     toast('Possible match — sent to the officer Review Queue instead of guessing.');
   } else {
     const ticket=createIncident(text,loc,land,t,photoData,photoMeta,pinLoc);
-    document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.<br><button onclick="liveAICheck()">Verify with Live AI (beta)</button><div id="liveAI" style="margin-top:8px"></div></div>`;
+    document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.<br><button onclick="liveAICheck()">Verify with Live AI (beta)</button> <button onclick="showSection('dashboard')">View on Officer Dashboard →</button><div id="liveAI" style="margin-top:8px"></div></div>`;
     toast(`New ticket ${ticket.id} — ${t.severity} · ${t.category} · Priority ${t.priority}/100`);
   }
   photoData=null; photoMeta=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value=''; document.getElementById('photoCam').value=''; closeCamera(); clearPin(); const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
-  render();
+  render(); renderHome();
 }
 
+function showSection(v,anchor){
+  document.body.dataset.view=v;
+  document.querySelectorAll('.navlink').forEach(b=>b.classList.toggle('active',b.dataset.nav===v));
+  const m=document.getElementById('navMenu'); if(m) m.style.display='none';
+  if(v==='home') renderHome();
+  if(anchor){ const el=document.getElementById(anchor); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth'}),50); }
+  else window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleMenu(e){ e.stopPropagation(); const m=document.getElementById('navMenu'); if(m) m.style.display=(m.style.display==='block')?'none':'block'; }
+document.addEventListener('click',()=>{ const m=document.getElementById('navMenu'); if(m) m.style.display='none'; });
+function navTrack(){
+  showSection('report');
+  document.querySelectorAll('.navlink').forEach(b=>b.classList.toggle('active',b.dataset.nav==='track'));
+  setTimeout(()=>{ const el=document.getElementById('trackId'); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.focus(); } },80);
+}
+function renderHome(){
+  const a=document.getElementById('hTotal'),b=document.getElementById('hCrit'),c=document.getElementById('hFused');
+  if(!a) return;
+  a.textContent=tickets.length;
+  b.textContent=tickets.filter(x=>x.severity==='Critical'&&x.status!=='Resolved').length;
+  c.textContent=tickets.reduce((s,x)=>s+(x.duplicates-1),0);
+}
 let lastComplaint='';
 function fmtClock(sec){ const m=Math.floor(sec/60), ss=sec%60; return m+':'+String(ss).padStart(2,'0'); }
 function trackTicket(){
@@ -517,7 +587,7 @@ function trackTicket(){
   if(!id){ box.innerHTML=''; return; }
   const t=tickets.find(x=>x.id.toUpperCase()===id);
   if(!t){ box.innerHTML='<div class="result vague" style="margin-top:10px"><b>Ticket not found.</b> Check the ID from your submission — it looks like CL-2026-1048. (Demo data resets when the page reloads.)</div>'; return; }
-  box.innerHTML='<div class="result ok" style="margin-top:10px"><b>'+t.id+' — '+t.category+'</b><br>Status: <b>'+t.status+'</b>'+(t.escalated?' — escalated to the Ward Engineer, citizen notified by SMS':'')+'<br>Department: <b>'+t.dept+'</b> · Severity: <b>'+t.severity+'</b> · Priority: <b>'+t.priority+'/100</b><br>SLA: <b>'+(t.sla||'3 days')+'</b> · Reported '+(t.time||'')+' · '+t.duplicates+' citizen report(s) on this Incident</div>';
+  box.innerHTML='<div class="result ok" style="margin-top:10px"><b>'+t.id+' — '+t.category+'</b><br>Status: <b>'+t.status+'</b>'+(t.escalated?' — escalated to the Ward Engineer, citizen notified by SMS':'')+'<br>Department: <b>'+t.dept+'</b> · Severity: <b>'+t.severity+'</b> · Priority: <b>'+t.priority+'/100</b><br>SLA: <b>'+(t.sla||'3 days')+'</b> · Reported '+(t.time||'')+' · '+t.duplicates+' citizen report(s) on this Incident'+(t.coords?'<br>📍 Exact location: '+t.coords.lat+', '+t.coords.lng+' · <a href="https://www.openstreetmap.org/?mlat='+t.coords.lat+'&mlon='+t.coords.lng+'#map=17/'+t.coords.lat+'/'+t.coords.lng+'" target="_blank" rel="noopener" style="color:var(--amber);font-weight:700">View on map ↗</a>':'')+'</div>';
 }
 function escalateTicket(id,silent){
   const t=tickets.find(x=>x.id===id); if(!t||t.escalated) return;
@@ -575,7 +645,7 @@ function render(){
   if(window.gsap) gsap.fromTo('.ticket',{y:16,opacity:0},{y:0,opacity:1,duration:.5,stagger:.06,ease:'power3.out',overwrite:true,clearProps:'transform'});
 }
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; if(window.gsap) gsap.fromTo(el,{y:16,opacity:0},{y:0,opacity:1,duration:.35,ease:'power3.out'}); setTimeout(()=>el.style.display='none',4200); }
-render();
+render(); renderHome();
 </script>
 <script id="fx">
 /* ThreeUI-style 3D particle field (Three.js) — points slowly clustering, mouse parallax. Fully guarded: if the CDN is unreachable, the page simply has no background canvas. */
