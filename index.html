@@ -8,6 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 /* TasteSkill direction: one palette — warm dark ink + single amber accent. Colour is spent on DATA (severity), not decoration. Quiet panels, aligned figures, huge display type. */
 :root{--bg:#0b0e12;--panel:#12161d;--panel2:#171d27;--line:#232b38;--ink:#e8e6e1;--muted:#9aa3af;--amber:#f5a524;--red:#f31260;--orange:#f97316;--yellow:#eab308;--green:#17c964}
@@ -151,6 +153,15 @@ html{scroll-behavior:smooth}
 <select id="location"><option>Soladevanahalli — Acharya Gate</option><option>Hesaraghatta Main Road</option><option>Peenya Industrial Area</option><option>Dasarahalli</option><option>Chikkabanavara</option><option>Yeshwanthpur</option></select>
 <label>What is nearby? This changes priority</label>
 <select id="landmark"><option value="School">School / College</option><option value="Hospital">Hospital / Clinic</option><option value="Residential" selected>Residential Area</option><option value="Market">Market / Bus Stop</option><option value="Highway">Highway / Main Road</option><option value="WaterBody">Lake / Drinking Water Source</option></select>
+<label>Exact location — pin it on the map (optional, helps crews reach the exact spot)</label>
+<button type="button" class="photobtn alt" style="width:100%" onclick="toggleMap()">📍 Pin Exact Location on Map</button>
+<div id="mapWrap" style="display:none;margin-top:8px">
+<div id="map" style="height:260px;border-radius:12px;border:1px solid var(--line);z-index:1;background:#0e1116"></div>
+<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+<button type="button" class="photobtn alt" style="flex:0 0 auto;padding:9px 14px" onclick="useMyLocation()">🎯 Use My Location</button>
+<span id="pinText" style="font-size:13px;color:var(--muted)">Tap anywhere on the map to drop the pin.</span>
+</div>
+</div>
 <label>Photo — optional, adds verification</label>
 <div class="photobtns">
 <button type="button" class="photobtn" onclick="openCamera()">📷 Take Photo</button>
@@ -267,9 +278,10 @@ html{scroll-behavior:smooth}
 <tr><th>Technology</th><th>Purpose</th></tr>
 <tr><td>Single-file HTML / CSS / JS</td><td>The whole prototype — zero install, no backend, works fully offline</td></tr>
 <tr><td>Deterministic triage engine (3 languages)</td><td>Classification, severity, routing and fusion scoring — designed via GenAI prompting</td></tr>
+<tr><td>Leaflet + OpenStreetMap</td><td>Exact-location pinning — tap-to-pin or one-tap GPS; coordinates stored on the ticket with a view-on-map link for crews; degrades gracefully offline</td></tr>
 <tr><td>Three.js + GSAP</td><td>Design and motion layer (ThreeUI / TasteSkill / 21st.dev direction) — guarded, so triage survives any CDN failure</td></tr>
 <tr><td>Hybrid Live AI (optional)</td><td>&ldquo;Verify with Live AI&rdquo; calls a live LLM with a 6-second timeout; if unreachable, it says so and the deterministic result stands</td></tr>
-<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (16 entries) in the GitHub repo</td></tr>
+<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (19 entries) in the GitHub repo</td></tr>
 </table>
 <div class="core"><b>Human + AI:</b> the AI analyses and recommends. Municipal officials verify and make the final decisions.</div>
 </section>
@@ -353,6 +365,39 @@ function snapPhoto(){
   const url=cv.toDataURL('image/jpeg',0.85);
   closeCamera(); setPhoto(url);
 }
+let pinLoc=null, pinMap=null, pinMarker=null;
+function toggleMap(){
+  const w=document.getElementById('mapWrap'); const show=w.style.display==='none';
+  w.style.display=show?'block':'none';
+  if(show) initPinMap();
+}
+function initPinMap(){
+  if(pinMap){ setTimeout(()=>pinMap.invalidateSize(),60); return; }
+  if(!window.L){ document.getElementById('pinText').textContent='Map could not load (offline) — your Area / Ward selection above still routes the complaint.'; return; }
+  pinMap=L.map('map').setView([13.0839,77.4837],14);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(pinMap);
+  pinMap.on('click',e=>setPin(e.latlng.lat,e.latlng.lng));
+  setTimeout(()=>pinMap.invalidateSize(),60);
+}
+function setPin(lat,lng){
+  pinLoc={lat:+lat.toFixed(5),lng:+lng.toFixed(5)};
+  if(!pinMap) return;
+  if(pinMarker) pinMarker.setLatLng([lat,lng]);
+  else pinMarker=L.circleMarker([lat,lng],{radius:9,color:'#f5a524',weight:2,fillColor:'#f5a524',fillOpacity:0.85}).addTo(pinMap);
+  document.getElementById('pinText').innerHTML='📍 Pinned: <b>'+pinLoc.lat+', '+pinLoc.lng+'</b> — the crew gets this exact spot.';
+}
+function useMyLocation(){
+  if(!navigator.geolocation){ toast('Location is not available on this device — tap the map to drop the pin instead'); return; }
+  navigator.geolocation.getCurrentPosition(
+    p=>{ const w=document.getElementById('mapWrap'); if(w.style.display==='none'){ w.style.display='block'; } initPinMap(); if(pinMap) pinMap.setView([p.coords.latitude,p.coords.longitude],16); setPin(p.coords.latitude,p.coords.longitude); },
+    ()=>toast('Could not get your location — tap the map to drop the pin manually'),
+    {timeout:6000});
+}
+function clearPin(){
+  pinLoc=null;
+  if(pinMarker&&pinMap){ pinMap.removeLayer(pinMarker); pinMarker=null; }
+  const pt=document.getElementById('pinText'); if(pt) pt.textContent='Tap anywhere on the map to drop the pin.';
+}
 const CATS={
  Roads:{dept:'BBMP — Roads & Infrastructure',keys:['pothole','road','tar','asphalt','speed breaker','footpath','ಗುಂಡಿ','ರಸ್ತೆ','गड्ढा','सड़क','gundi','sadak','hole in road','broken road','accident']},
  Waste:{dept:'BBMP — Solid Waste Management (SWM)',keys:['garbage','waste','dustbin','trash','litter','smell','ಕಸ','कचरा','kasa','kachra','overflowing bin','dump']},
@@ -419,12 +464,12 @@ function fusionScore(ex,text,category,loc){
 }
 let pendingFusion=null;
 function applyMerge(dup){ dup.duplicates++; dupMergedTotal++; dup.breakdown.communityPts=Math.min(20,dup.breakdown.communityPts+5); dup.priority=Math.min(100,dup.priority+5); }
-function createIncident(text,loc,land,t,photo,meta){
-  const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photo,photoMeta:meta||null,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+function createIncident(text,loc,land,t,photo,meta,coords){
+  const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photo,photoMeta:meta||null,coords:coords||null,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
   tickets.unshift(ticket); lastComplaint=text; return ticket;
 }
 function mergePending(){ if(!pendingFusion) return; const dup=pendingFusion.candidate; applyMerge(dup); toast('Officer merged it into '+dup.id+' — this Incident now has '+dup.duplicates+' supporting reports, priority '+dup.priority+'/100.'); pendingFusion=null; render(); }
-function separatePending(){ if(!pendingFusion) return; const tk=createIncident(pendingFusion.text,pendingFusion.loc,pendingFusion.land,pendingFusion.t,pendingFusion.photo,pendingFusion.meta); toast('Kept separate — new Incident '+tk.id+' created by officer decision.'); pendingFusion=null; render(); }
+function separatePending(){ if(!pendingFusion) return; const tk=createIncident(pendingFusion.text,pendingFusion.loc,pendingFusion.land,pendingFusion.t,pendingFusion.photo,pendingFusion.meta,pendingFusion.coords); toast('Kept separate — new Incident '+tk.id+' created by officer decision.'); pendingFusion=null; render(); }
 function renderReview(){
   const q=document.getElementById('reviewQueue'); if(!q) return;
   if(!pendingFusion){ q.innerHTML=''; return; }
@@ -452,15 +497,15 @@ function submitComplaint(){
     document.getElementById('aiResult').innerHTML=`<div class="result dup"><b>INCIDENT FUSION — Auto-Merged.</b><br>4 signals matched <b>${dup.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time window ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (75+ = auto-merge). Your report is now a supporting report on that Incident, not a buried duplicate.<br><b>Community reports: ${dup.duplicates} citizens</b> · Priority boosted to <b>${dup.priority}/100</b><br>Officer time saved — and the issue now ranks higher.</div>`;
     toast(`Incident Fusion: auto-merged into ${dup.id} at ${bestF.total}/100 — priority now ${dup.priority}/100.`);
   } else if(bestF && bestF.total>=50){
-    pendingFusion={text,loc,land,t,photo:photoData,meta:photoMeta,candidate:best,f:bestF};
+    pendingFusion={text,loc,land,t,photo:photoData,meta:photoMeta,coords:pinLoc,candidate:best,f:bestF};
     document.getElementById('aiResult').innerHTML=`<div class="result vague"><b>INCIDENT FUSION — Possible match. A human decides.</b><br>Signals vs <b>${best.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (50-74 = human review, never a silent wrong merge).<br>It is waiting in the officer <b>Review Queue</b> on the dashboard: Merge, or Keep Separate.</div>`;
     toast('Possible match — sent to the officer Review Queue instead of guessing.');
   } else {
-    const ticket=createIncident(text,loc,land,t,photoData,photoMeta);
+    const ticket=createIncident(text,loc,land,t,photoData,photoMeta,pinLoc);
     document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.<br><button onclick="liveAICheck()">Verify with Live AI (beta)</button><div id="liveAI" style="margin-top:8px"></div></div>`;
     toast(`New ticket ${ticket.id} — ${t.severity} · ${t.category} · Priority ${t.priority}/100`);
   }
-  photoData=null; photoMeta=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value=''; document.getElementById('photoCam').value=''; closeCamera(); const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
+  photoData=null; photoMeta=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value=''; document.getElementById('photoCam').value=''; closeCamera(); clearPin(); const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
   render();
 }
 
@@ -520,6 +565,7 @@ function render(){
     <div class="ring">${ringSVG(t.priority,t.severity)}<div class="rv">${t.priority}</div><div style="font-size:10px;color:var(--muted);letter-spacing:.1em">PRIORITY</div></div></div>
     ${t.photo?`<img src="${t.photo}" class="photo">`:''}
     ${t.photo&&t.photoMeta?`<div style="font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"><b>📷 Photo Evidence Check:</b> ${t.photoMeta.w}×${t.photoMeta.h} · Lighting ${t.photoMeta.bright<45?'Low':(t.photoMeta.bright>242?'Overexposed':'Good')} (${t.photoMeta.bright}/255) · Sharpness ${t.photoMeta.sharp<80?'Soft / blurry':'Sharp'}${t.photoMeta.flags.length?'<br>⚠ '+t.photoMeta.flags.join('<br>⚠ '):'<br>✓ No quality issues detected'}</div>`:''}
+    ${t.coords?`<div style="font-size:12.5px;margin-top:8px">📍 <b>Exact location:</b> ${t.coords.lat}, ${t.coords.lng} · <a href="https://www.openstreetmap.org/?mlat=${t.coords.lat}&mlon=${t.coords.lng}#map=17/${t.coords.lat}/${t.coords.lng}" target="_blank" rel="noopener" style="color:var(--amber);font-weight:700">View on map ↗</a></div>`:''}
     <div class="chips"><span class="chip">${t.category}</span><span class="chip sev-${t.severity}">${t.severity}</span><span class="chip dept">${t.dept}</span><span class="chip">Near ${t.land}</span><span class="chip">${t.lang||'English'}</span><span class="chip">SLA: ${t.sla||'3 days'}</span>${t.escalated?'<span class="chip" style="color:#fff;background:var(--red);border-color:var(--red)">ESCALATED → Ward Engineer · Citizen notified</span>':(t.escSec!=null&&t.status==='Open'?'<span class="chip" data-esc="'+t.id+'">Escalates in '+fmtClock(t.escSec)+' (demo clock)</span>':'')}${t.duplicates>1?`<span class="chip" style="color:#f31260;border-color:rgba(243,18,96,.5)">${t.duplicates} citizens reported this</span>`:''}<span class="chip">${t.status}</span></div>
     <div class="reason"><b>AI Reason:</b> ${t.reason}${(t.severity==='Critical'||t.severity==='High')?`<br><b>Auto-escalation:</b> live countdown above (demo clock compresses half-SLA to minutes; production uses real hours). At zero, status flips to ESCALATED, it goes to the Ward Engineer and the citizen gets an SMS update.`:''}</div>
     <div class="breakdown"><b>Why this priority?</b> Severity ${t.breakdown.sevPts} + Vulnerable Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Community ${t.breakdown.communityPts||0} + Urgency 15<div class="bar"><i data-w="${t.priority}"></i></div></div>
