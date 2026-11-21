@@ -150,7 +150,7 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 let photoData=null, dupMergedTotal=0, filter='All', seq=1042;
 document.getElementById('photo').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=ev=>{photoData=ev.target.result; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block'; toast('Photo attached — HazardEye verification: +10 priority points')}; r.readAsDataURL(f);
+  const r=new FileReader(); r.onload=ev=>{photoData=ev.target.result; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block'; toast('Photo attached: +10 credibility — presence check today; Vision-API hazard detection is the production step')}; r.readAsDataURL(f);
 });
 const CATS={
  Roads:{dept:'BBMP — Roads & Infrastructure',keys:['pothole','road','tar','asphalt','speed breaker','footpath','ಗುಂಡಿ','ರಸ್ತೆ','गड्ढा','सड़क','gundi','sadak','hole in road','broken road','accident']},
@@ -173,7 +173,7 @@ let tickets=[
 tickets[0].duplicates=3; tickets[0].priority=Math.min(100,tickets[0].priority+15); tickets[0].breakdown.communityPts=15; dupMergedTotal=3;
 function mkSeed(text,loc,land,forceCat){
   const t=triage(text,land,false,loc); if(forceCat){t.category=forceCat; t.dept=CATS[forceCat].dept}
-  return {id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:null,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
+  return {id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:null,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
 }
 function detectLang(text){ if(/[\u0C80-\u0CFF]/.test(text)) return 'Kannada'; if(/[\u0900-\u097F]/.test(text)) return 'Hindi'; return 'English'; }
 function triage(text,landmark,hasPhoto,loc){
@@ -223,16 +223,49 @@ function submitComplaint(){
     document.getElementById('aiResult').innerHTML=`<div class="result dup"><b>DUPLICATE DETECTED — Smart Merge.</b><br>This issue already exists as <b>${dup.id}</b>. Instead of a new buried ticket, yours merged into the master ticket.<br><b>Community reports: ${dup.duplicates} citizens</b> · Priority boosted to <b>${dup.priority}/100</b><br>Officer time saved — and the issue now ranks higher.</div>`;
     toast(`Duplicate merged into ${dup.id} — priority now ${dup.priority}/100. That is the winning difference.`);
   } else {
-    const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photoData,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
-    tickets.unshift(ticket);
-    document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.</div>`;
+    const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photoData,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+    tickets.unshift(ticket); lastComplaint=text;
+    document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.<br><button onclick="liveAICheck()">Verify with Live AI (beta)</button><div id="liveAI" style="margin-top:8px"></div></div>`;
     toast(`New ticket ${ticket.id} — ${t.severity} · ${t.category} · Priority ${t.priority}/100`);
   }
   photoData=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value='';
   render();
 }
+
+let lastComplaint='';
+function fmtClock(sec){ const m=Math.floor(sec/60), ss=sec%60; return m+':'+String(ss).padStart(2,'0'); }
+function escalateTicket(id,silent){
+  const t=tickets.find(x=>x.id===id); if(!t||t.escalated) return;
+  t.escalated=true; t.status='ESCALATED';
+  if(!silent) toast('ESCALATED: '+t.id+' ('+t.severity+') crossed half its SLA unassigned — sent to the Ward Engineer, citizen notified by SMS.');
+  render();
+}
+setInterval(()=>{
+  let changed=false;
+  tickets.forEach(t=>{
+    if(t.escSec!=null && !t.escalated && t.status==='Open'){
+      t.escSec--; 
+      const el=document.querySelector('[data-esc="'+t.id+'"]'); if(el) el.textContent='Escalates in '+fmtClock(Math.max(0,t.escSec))+' (demo clock)';
+      if(t.escSec<=0){ escalateTicket(t.id); changed=true; }
+    }
+  });
+},1000);
+async function liveAICheck(){
+  const box=document.getElementById('liveAI'); if(!box||!lastComplaint) return;
+  box.innerHTML='Contacting live AI model… (deterministic result above stands whatever happens)';
+  const prompt='Classify this civic complaint in one line as: Category | Severity | Department in Bengaluru. Categories: Roads, Waste, Water, Electricity, Trees, Drainage. Severities: Low, Medium, High, Critical. Complaint: '+lastComplaint;
+  try{
+    const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),6000);
+    const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt),{signal:ctrl.signal}); clearTimeout(to);
+    if(!r.ok) throw new Error('bad status');
+    const txt=(await r.text()).trim().slice(0,220);
+    box.innerHTML='<b>Live AI (external LLM) says:</b> '+txt+'<br><span style="color:var(--muted)">Hybrid design: live model when the network allows, deterministic engine as the always-on fallback.</span>';
+  }catch(e){
+    box.innerHTML='<b>Live AI unreachable</b> (venue network / timeout) — the deterministic fallback result above stands. This is exactly why the hybrid design exists.';
+  }
+}
 function setFilter(f,el){filter=f; document.querySelectorAll('#filters button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); render()}
-function cycleStatus(id){ const t=tickets.find(x=>x.id===id); t.status=t.status==='Open'?'Assigned':t.status==='Assigned'?'Resolved':'Open'; render(); }
+function cycleStatus(id){ const t=tickets.find(x=>x.id===id); t.status=(t.status==='Open'||t.status==='ESCALATED')?'Assigned':t.status==='Assigned'?'Resolved':'Open'; if(t.status!=='Open') t.escalated=t.escalated&&false; render(); }
 function ringSVG(p,sev){ const c={Critical:'#f31260',High:'#f97316',Medium:'#eab308',Low:'#17c964'}[sev]||'#f5a524'; const r=26,circ=2*Math.PI*r,off=circ-(p/100)*circ; return `<svg width="64" height="64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="#232b38" stroke-width="6"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg>` }
 function setCount(id,val){ const el=document.getElementById(id); if(window.gsap){ const o={v:parseInt(el.textContent)||0}; gsap.to(o,{v:val,duration:.8,ease:'power2.out',onUpdate:()=>el.textContent=Math.round(o.v)}) } else el.textContent=val; }
 function render(){
@@ -245,10 +278,10 @@ function render(){
     <div class="t-head"><div><div class="t-id">${t.id} · ${t.loc} · ${t.time||''}</div><p class="t-text kannada">${t.text}</p></div>
     <div class="ring">${ringSVG(t.priority,t.severity)}<div class="rv">${t.priority}</div><div style="font-size:10px;color:var(--muted);letter-spacing:.1em">PRIORITY</div></div></div>
     ${t.photo?`<img src="${t.photo}" class="photo">`:''}
-    <div class="chips"><span class="chip">${t.category}</span><span class="chip sev-${t.severity}">${t.severity}</span><span class="chip dept">${t.dept}</span><span class="chip">Near ${t.land}</span><span class="chip">${t.lang||'English'}</span><span class="chip">SLA: ${t.sla||'3 days'}</span>${t.duplicates>1?`<span class="chip" style="color:#f31260;border-color:rgba(243,18,96,.5)">${t.duplicates} citizens reported this</span>`:''}<span class="chip">${t.status}</span></div>
-    <div class="reason"><b>AI Reason:</b> ${t.reason}${(t.severity==='Critical'||t.severity==='High')?`<br><b>Auto-escalation:</b> if not Assigned within half the SLA, this escalates to the Ward Engineer and the citizen gets a status update.`:''}</div>
+    <div class="chips"><span class="chip">${t.category}</span><span class="chip sev-${t.severity}">${t.severity}</span><span class="chip dept">${t.dept}</span><span class="chip">Near ${t.land}</span><span class="chip">${t.lang||'English'}</span><span class="chip">SLA: ${t.sla||'3 days'}</span>${t.escalated?'<span class="chip" style="color:#fff;background:var(--red);border-color:var(--red)">ESCALATED → Ward Engineer · Citizen notified</span>':(t.escSec!=null&&t.status==='Open'?'<span class="chip" data-esc="'+t.id+'">Escalates in '+fmtClock(t.escSec)+' (demo clock)</span>':'')}${t.duplicates>1?`<span class="chip" style="color:#f31260;border-color:rgba(243,18,96,.5)">${t.duplicates} citizens reported this</span>`:''}<span class="chip">${t.status}</span></div>
+    <div class="reason"><b>AI Reason:</b> ${t.reason}${(t.severity==='Critical'||t.severity==='High')?`<br><b>Auto-escalation:</b> live countdown above (demo clock compresses half-SLA to minutes; production uses real hours). At zero, status flips to ESCALATED, it goes to the Ward Engineer and the citizen gets an SMS update.`:''}</div>
     <div class="breakdown"><b>Why this priority?</b> Severity ${t.breakdown.sevPts} + Vulnerable Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Community ${t.breakdown.communityPts||0} + Urgency 15<div class="bar"><i data-w="${t.priority}"></i></div></div>
-    <div class="actions"><button onclick="cycleStatus('${t.id}')">Change Status: ${t.status}</button><button onclick="toast('Field crew route: ${t.loc} — added to today\\'s optimised route')">Add to Crew Route</button></div>
+    <div class="actions"><button onclick="cycleStatus('${t.id}')">Change Status: ${t.status}</button>${(t.severity==='Critical'||t.severity==='High')&&!t.escalated?`<button onclick="escalateTicket('${t.id}')">Simulate half-SLA → Escalate</button>`:''}<button onclick="toast('Field crew route: ${t.loc} — added to today\\'s optimised route')">Add to Crew Route</button></div>
   </div>`).join('') || '<p style="color:var(--muted)">No tickets in this filter.</p>';
   requestAnimationFrame(()=>document.querySelectorAll('.bar i').forEach(i=>i.style.width=i.dataset.w+'%'));
   if(window.gsap) gsap.fromTo('.ticket',{y:16,opacity:0},{y:0,opacity:1,duration:.5,stagger:.06,ease:'power3.out',overwrite:true,clearProps:'transform'});
