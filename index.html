@@ -228,7 +228,10 @@ html{scroll-behavior:smooth}
 </div>
 <p style="font-size:12px;color:var(--muted);line-height:1.5">Your camera stays on your device — the photo is used only for this complaint.</p>
 </div>
-<img id="preview" class="photo" style="display:none;cursor:pointer" onclick="photoTap()" title="Tap to see the exact location on a map">
+<div id="photoWrap" style="position:relative;display:none;margin-top:10px">
+<img id="preview" class="photo" style="display:block;margin-top:0;cursor:pointer" onclick="photoTap()" title="Tap to see the exact location on a map">
+<div id="stampOverlay" style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.74);color:#fff;font-size:12.5px;font-weight:600;line-height:1.5;padding:7px 10px;border-radius:0 0 13px 13px;display:none"></div>
+</div>
 <div id="geoCaption" style="display:none;font-size:13px;font-weight:600;line-height:1.5;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"></div>
 <button type="button" id="removePhotoBtn" class="photobtn alt" style="display:none;width:100%;margin-top:8px" onclick="removePhoto()">🗑 Remove Photo — attach a different one instead</button>
 <div id="photoCheck" style="display:none;font-size:13px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-top:8px"></div>
@@ -334,7 +337,7 @@ html{scroll-behavior:smooth}
 <tr><td>Leaflet + OpenStreetMap</td><td>Exact-location pinning — tap-to-pin or one-tap GPS; coordinates stored on the ticket with a view-on-map link for crews; degrades gracefully offline</td></tr>
 <tr><td>GSAP</td><td>Motion layer — guarded, so triage survives any CDN failure; the layout itself is a clean, simple white interface</td></tr>
 <tr><td>Hybrid Live AI (optional)</td><td>&ldquo;Verify with Live AI&rdquo; calls a live LLM with a 6-second timeout; if unreachable, it says so and the deterministic result stands</td></tr>
-<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (23 entries) in the GitHub repo</td></tr>
+<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (24 entries) in the GitHub repo</td></tr>
 </table>
 <div class="core"><b>Human + AI:</b> the AI analyses and recommends. Municipal officials verify and make the final decisions.</div>
 </section>
@@ -412,7 +415,9 @@ async function setPhoto(dataUrl){
     return;
   }
   photoData=norm.url; photoOrigUrl=norm.url;
-  const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
+  const p=document.getElementById('preview'); p.src=photoData;
+  const pw=document.getElementById('photoWrap'); if(pw) pw.style.display='block';
+  const so=document.getElementById('stampOverlay'); if(so) so.style.display='none';
   const rb=document.getElementById('removePhotoBtn'); if(rb) rb.style.display='block';
   setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
   photoMeta=await analyzePhoto(photoData);
@@ -448,31 +453,71 @@ function showLocMsg(code){
   if(pt) pt.innerHTML='📍 '+geoErrorText(code);
 }
 function hideLocMsg(){ const m=document.getElementById('locMsg'); if(m) m.style.display='none'; }
-let photoOrigUrl=null;
+let photoOrigUrl=null, placeName=null, placeFor=null;
+function coordsKey(c){ return c.lat.toFixed(4)+','+c.lng.toFixed(4); }
+function stampLines(coords){
+  return { name:(placeName&&placeFor===coordsKey(coords))?placeName:null,
+           line:'📍 '+coords.lat+', '+coords.lng+'  ·  '+new Date().toLocaleString('en-IN') };
+}
+function paintStamp(coords){
+  const L=stampLines(coords);
+  const so=document.getElementById('stampOverlay');
+  if(so&&photoData){ so.innerHTML=(L.name?('📍 <b>'+L.name+'</b><br>'):'')+L.line; so.style.display='block'; }
+  const cap=document.getElementById('geoCaption');
+  if(cap&&photoData){
+    cap.innerHTML=(L.name?('📍 <b>'+L.name+'</b><br>'):'📍 ')+'<b>Exact location of this photo:</b> '+coords.lat+', '+coords.lng+'<br><span style="color:var(--muted);font-weight:500">Stamped on the photo itself. Tap the photo to open this spot on a map.</span>';
+    cap.style.display='block';
+  }
+  burnGeoStamp(coords);
+}
 function applyGeo(coords,silent){
   if(!coords) return false;
   if(photoMeta) photoMeta.geo=coords;
   const gl=document.getElementById('geoLine');
   if(gl) gl.innerHTML='📍 <b>Photo geo-tagged:</b> '+coords.lat+', '+coords.lng+' — captured with the photo, travels with the ticket.';
-  const cap=document.getElementById('geoCaption');
-  if(cap&&photoData){
-    cap.innerHTML='📍 <b>Exact location of this photo:</b> '+coords.lat+', '+coords.lng+'<br><span style="color:var(--muted);font-weight:500">The coordinates are stamped onto the photo itself. Tap the photo to open this spot on a map.</span>';
-    cap.style.display='block';
-    burnGeoStamp(coords);
-  }
+  if(photoData) paintStamp(coords);
   if(!pinLoc) setPin(coords.lat,coords.lng);
+  reverseGeocode(coords);
   return true;
+}
+function reverseGeocode(coords){
+  const key=coordsKey(coords);
+  if(placeFor===key&&placeName){ paintPlaceName(); return; }
+  try{
+    fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+coords.lat+'&lon='+coords.lng+'&zoom=18&addressdetails=1')
+    .then(r=>r.json()).then(j=>{
+      if(!j||!j.display_name) return;
+      const nm=j.display_name.split(',').slice(0,3).map(s=>s.trim()).join(', ');
+      if(!nm) return;
+      placeName=nm; placeFor=key;
+      if(photoMeta) photoMeta.place=nm;
+      paintPlaceName();
+    }).catch(()=>{});
+  }catch(e){}
+}
+function paintPlaceName(){
+  if(!placeName) return;
+  const g=(photoMeta&&photoMeta.geo)?photoMeta.geo:pinLoc;
+  if(g&&photoData) paintStamp(g);
+  const pt=document.getElementById('pinText');
+  if(pt&&pinLoc&&!pt.dataset.named){ pt.innerHTML='📍 Pinned: '+pinLoc.lat+', '+pinLoc.lng+' — <b>'+placeName+'</b> — the crew gets this exact spot.'; pt.dataset.named='1'; }
+  const gl=document.getElementById('geoLine');
+  if(gl&&photoMeta&&photoMeta.geo) gl.innerHTML='📍 <b>Photo geo-tagged:</b> '+placeName+' ('+photoMeta.geo.lat+', '+photoMeta.geo.lng+') — travels with the ticket.';
 }
 function burnGeoStamp(coords){
   if(!photoOrigUrl||!photoMeta) return;
+  const L=stampLines(coords);
   const img=new Image();
   img.onload=()=>{ try{
     const cv=document.createElement('canvas'); cv.width=img.naturalWidth; cv.height=img.naturalHeight;
     const cx=cv.getContext('2d'); cx.drawImage(img,0,0);
-    const strip=Math.max(30,Math.round(cv.height*0.075));
-    cx.fillStyle='rgba(0,0,0,0.72)'; cx.fillRect(0,cv.height-strip,cv.width,strip);
-    cx.fillStyle='#ffffff'; cx.font='700 '+Math.round(strip*0.42)+'px Arial';
-    cx.fillText('📍 '+coords.lat+', '+coords.lng+'  ·  '+new Date().toLocaleString('en-IN'), Math.round(strip*0.35), cv.height-Math.round(strip*0.32));
+    const lines=L.name?[L.name,L.line]:[L.line];
+    let fs=Math.max(13,Math.round(cv.height*0.045));
+    const stripH=Math.round(fs*1.5*lines.length)+Math.round(fs*0.7);
+    cx.fillStyle='rgba(0,0,0,0.74)'; cx.fillRect(0,cv.height-stripH,cv.width,stripH);
+    cx.fillStyle='#ffffff';
+    const fit=t=>{ cx.font='700 '+fs+'px Arial'; while(cx.measureText(t).width>cv.width-fs&&fs>9){ fs--; cx.font='700 '+fs+'px Arial'; } return t; };
+    lines.forEach((t,i)=>{ cx.fillText(fit(t), Math.round(fs*0.6), cv.height-stripH+Math.round(fs*(1.15+i*1.5))); });
     photoData=cv.toDataURL('image/jpeg',0.88);
     const p=document.getElementById('preview'); if(p) p.src=photoData;
   }catch(e){} };
@@ -509,7 +554,9 @@ function handlePhotoFile(f){ if(!f) return; const r=new FileReader(); r.onload=e
 function removePhoto(silent){
   photoData=null; photoMeta=null; photoOrigUrl=null;
   const cap=document.getElementById('geoCaption'); if(cap) cap.style.display='none';
-  const p=document.getElementById('preview'); if(p){ p.style.display='none'; p.removeAttribute('src'); }
+  const p=document.getElementById('preview'); if(p){ p.removeAttribute('src'); }
+  const pw=document.getElementById('photoWrap'); if(pw) pw.style.display='none';
+  const so=document.getElementById('stampOverlay'); if(so) so.style.display='none';
   const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
   const rb=document.getElementById('removePhotoBtn'); if(rb) rb.style.display='none';
   const f1=document.getElementById('photo'); if(f1) f1.value='';
@@ -553,10 +600,14 @@ function initPinMap(){
 }
 function setPin(lat,lng){
   pinLoc={lat:+lat.toFixed(5),lng:+lng.toFixed(5)};
+  reverseGeocode(pinLoc);
   if(!pinMap) return;
   if(pinMarker) pinMarker.setLatLng([lat,lng]);
   else pinMarker=L.circleMarker([lat,lng],{radius:9,color:'#f5a524',weight:2,fillColor:'#f5a524',fillOpacity:0.85}).addTo(pinMap);
-  document.getElementById('pinText').innerHTML='📍 Pinned: <b>'+pinLoc.lat+', '+pinLoc.lng+'</b> — the crew gets this exact spot.';
+  const ptEl=document.getElementById('pinText');
+  ptEl.innerHTML='📍 Pinned: <b>'+pinLoc.lat+', '+pinLoc.lng+'</b> — the crew gets this exact spot.';
+  delete ptEl.dataset.named;
+  if(placeName&&placeFor===coordsKey(pinLoc)) paintPlaceName();
 }
 function useMyLocation(){
   captureGeo(true,(coords,err)=>{
@@ -637,7 +688,7 @@ function fusionScore(ex,text,category,loc){
 let pendingFusion=null;
 function applyMerge(dup,coords){ dup.duplicates++; dupMergedTotal++; dup.breakdown.communityPts=Math.min(20,dup.breakdown.communityPts+5); dup.priority=Math.min(100,dup.priority+5); if(coords&&!dup.coords) dup.coords=coords; }
 function createIncident(text,loc,land,t,photo,meta,coords){
-  const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photo,photoMeta:meta||null,coords:coords||null,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+  const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photo,photoMeta:meta||null,coords:coords||null,place:placeName||null,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
   tickets.unshift(ticket); lastComplaint=text; return ticket;
 }
 function mergePending(){ if(!pendingFusion) return; const dup=pendingFusion.candidate; applyMerge(dup,pendingFusion.coords); toast('Officer merged it into '+dup.id+' — this Incident now has '+dup.duplicates+' supporting reports, priority '+dup.priority+'/100.'); pendingFusion=null; render(); }
@@ -712,7 +763,7 @@ function trackTicket(){
   if(!id){ box.innerHTML=''; return; }
   const t=tickets.find(x=>x.id.toUpperCase()===id);
   if(!t){ box.innerHTML='<div class="result vague" style="margin-top:10px"><b>Ticket not found.</b> Check the ID from your submission — it looks like CL-2026-1048. (Demo data resets when the page reloads.)</div>'; return; }
-  box.innerHTML='<div class="result ok" style="margin-top:10px"><b>'+t.id+' — '+t.category+'</b><br>Status: <b>'+t.status+'</b>'+(t.escalated?' — escalated to the Ward Engineer, citizen notified by SMS':'')+'<br>Department: <b>'+t.dept+'</b> · Severity: <b>'+t.severity+'</b> · Priority: <b>'+t.priority+'/100</b><br>SLA: <b>'+(t.sla||'3 days')+'</b> · Reported '+(t.time||'')+' · '+t.duplicates+' citizen report(s) on this Incident'+(t.coords?'<br>📍 Exact location: '+t.coords.lat+', '+t.coords.lng+' · <a href="https://www.openstreetmap.org/?mlat='+t.coords.lat+'&mlon='+t.coords.lng+'#map=17/'+t.coords.lat+'/'+t.coords.lng+'" target="_blank" rel="noopener" style="color:var(--amber);font-weight:700">View on map ↗</a>':'')+'</div>';
+  box.innerHTML='<div class="result ok" style="margin-top:10px"><b>'+t.id+' — '+t.category+'</b><br>Status: <b>'+t.status+'</b>'+(t.escalated?' — escalated to the Ward Engineer, citizen notified by SMS':'')+'<br>Department: <b>'+t.dept+'</b> · Severity: <b>'+t.severity+'</b> · Priority: <b>'+t.priority+'/100</b><br>SLA: <b>'+(t.sla||'3 days')+'</b> · Reported '+(t.time||'')+' · '+t.duplicates+' citizen report(s) on this Incident'+(t.coords?'<br>📍 Exact location: '+(t.place?('<b>'+t.place+'</b> · '):'')+t.coords.lat+', '+t.coords.lng+' · <a href="https://www.openstreetmap.org/?mlat='+t.coords.lat+'&mlon='+t.coords.lng+'#map=17/'+t.coords.lat+'/'+t.coords.lng+'" target="_blank" rel="noopener" style="color:var(--amber);font-weight:700">View on map ↗</a>':'')+'</div>';
 }
 function escalateTicket(id,silent){
   const t=tickets.find(x=>x.id===id); if(!t||t.escalated) return;
@@ -759,8 +810,8 @@ function render(){
     <div class="t-head"><div><div class="t-id">${t.id} · ${t.loc} · ${t.time||''}</div><p class="t-text kannada">${t.text}</p></div>
     <div class="ring">${ringSVG(t.priority,t.severity)}<div class="rv">${t.priority}</div><div style="font-size:10px;color:var(--muted);letter-spacing:.1em">PRIORITY</div></div></div>
     ${t.photo?`<img src="${t.photo}" class="photo">`:''}
-    ${t.photo&&t.photoMeta?`<div style="font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"><b>📷 Photo Evidence Check:</b> ${t.photoMeta.w}×${t.photoMeta.h} · Lighting ${t.photoMeta.bright<45?'Low':(t.photoMeta.bright>242?'Overexposed':'Good')} (${t.photoMeta.bright}/255) · Sharpness ${t.photoMeta.sharp<80?'Soft / blurry':'Sharp'}${t.photoMeta.flags.length?'<br>⚠ '+t.photoMeta.flags.join('<br>⚠ '):'<br>✓ No quality issues detected'}${t.photoMeta.geo?'<br>📍 Photo geo-tagged at capture: '+t.photoMeta.geo.lat+', '+t.photoMeta.geo.lng:''}</div>`:''}
-    ${t.coords?`<div style="font-size:12.5px;margin-top:8px">📍 <b>Exact location:</b> ${t.coords.lat}, ${t.coords.lng} · <a href="https://www.openstreetmap.org/?mlat=${t.coords.lat}&mlon=${t.coords.lng}#map=17/${t.coords.lat}/${t.coords.lng}" target="_blank" rel="noopener" style="color:var(--amber);font-weight:700">View on map ↗</a></div>`:''}
+    ${t.photo&&t.photoMeta?`<div style="font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"><b>📷 Photo Evidence Check:</b> ${t.photoMeta.w}×${t.photoMeta.h} · Lighting ${t.photoMeta.bright<45?'Low':(t.photoMeta.bright>242?'Overexposed':'Good')} (${t.photoMeta.bright}/255) · Sharpness ${t.photoMeta.sharp<80?'Soft / blurry':'Sharp'}${t.photoMeta.flags.length?'<br>⚠ '+t.photoMeta.flags.join('<br>⚠ '):'<br>✓ No quality issues detected'}${t.photoMeta.geo?'<br>📍 Photo geo-tagged at capture: '+(t.photoMeta.place?('<b>'+t.photoMeta.place+'</b> · '):'')+t.photoMeta.geo.lat+', '+t.photoMeta.geo.lng:''}</div>`:''}
+    ${t.coords?`<div style="font-size:12.5px;margin-top:8px">📍 <b>Exact location:</b> ${t.place?('<b>'+t.place+'</b> · '):''}${t.coords.lat}, ${t.coords.lng} · <a href="https://www.openstreetmap.org/?mlat=${t.coords.lat}&mlon=${t.coords.lng}#map=17/${t.coords.lat}/${t.coords.lng}" target="_blank" rel="noopener" style="color:var(--amber);font-weight:700">View on map ↗</a></div>`:''}
     <div class="chips"><span class="chip">${t.category}</span><span class="chip sev-${t.severity}">${t.severity}</span><span class="chip dept">${t.dept}</span><span class="chip">Near ${t.land}</span><span class="chip">${t.lang||'English'}</span><span class="chip">SLA: ${t.sla||'3 days'}</span>${t.escalated?'<span class="chip" style="color:#fff;background:var(--red);border-color:var(--red)">ESCALATED → Ward Engineer · Citizen notified</span>':(t.escSec!=null&&t.status==='Open'?'<span class="chip" data-esc="'+t.id+'">Escalates in '+fmtClock(t.escSec)+' (demo clock)</span>':'')}${t.duplicates>1?`<span class="chip" style="color:#f31260;border-color:rgba(243,18,96,.5)">${t.duplicates} citizens reported this</span>`:''}<span class="chip">${t.status}</span></div>
     <div class="reason"><b>AI Reason:</b> ${t.reason}${(t.severity==='Critical'||t.severity==='High')?`<br><b>Auto-escalation:</b> live countdown above (demo clock compresses half-SLA to minutes; production uses real hours). At zero, status flips to ESCALATED, it goes to the Ward Engineer and the citizen gets an SMS update.`:''}</div>
     <div class="breakdown"><b>Why this priority?</b> Severity ${t.breakdown.sevPts} + Vulnerable Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Community ${t.breakdown.communityPts||0} + Urgency 15<div class="bar"><i data-w="${t.priority}"></i></div></div>
