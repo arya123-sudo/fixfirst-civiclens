@@ -20,7 +20,7 @@ Most teams build a form → AI label → list. FixFirst solves the *real* triage
 4. **Explainable Priority Score 0–100** — Every ticket shows its breakdown: Severity (0-40) + Zone (8-20) + Community (0-20) + Photo (0/10) + Urgency (15). No black box — officers can defend the order to citizens/councillors.
 
 ## Features (All 5 Required + Extras)
-- [x] 1. Free-text complaint in English / Kannada / Hindi (auto language detection, Kannada & Devanagari script support) + optional photo upload with preview
+- [x] 1. Free-text complaint in English / Kannada / Hindi (auto language detection, Kannada & Devanagari script support) + optional photo with preview — **citizen-first 30-second flow**: hero "Report a Problem" button jumps straight to the form, 3-step guidance (Describe → Snap → Submit), and **in-website photo capture** (live camera via getUserMedia with a mobile `capture` fallback) alongside gallery upload
 - [x] 2. Classification: Roads, Waste, Water, Electricity, Trees, Drainage (keyword engine in 3 languages + transliteration)
 - [x] 3. Severity: Low / Medium / High / Critical with one-line reason (e.g. exposed live wire near school = Critical)
 - [x] 4. Routing: Roads→BBMP Roads, Waste→BBMP SWM, Water→BWSSB, Electricity→BESCOM, Trees→BBMP Forest Cell, Drainage→BBMP Storm Water Drain
