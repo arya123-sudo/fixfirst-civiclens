@@ -387,12 +387,39 @@ function photoCheckText(m){
   const sharp=m.sharp<80?'Soft / blurry':'Sharp';
   return m.w+'×'+m.h+' · Lighting: '+light+' ('+m.bright+'/255) · Sharpness: '+sharp+(m.flags.length?'<br>⚠ '+m.flags.join('<br>⚠ '):'<br>✓ No quality issues detected');
 }
+function normalizePhoto(dataUrl){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{ try{
+      const MAX=1280, W=img.naturalWidth, H=img.naturalHeight, sc=Math.min(1,MAX/Math.max(W,H));
+      const cv=document.createElement('canvas'); cv.width=Math.max(1,Math.round(W*sc)); cv.height=Math.max(1,Math.round(H*sc));
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      res({url:cv.toDataURL('image/jpeg',0.85),w:W,h:H});
+    }catch(e){ res(null); } };
+    img.onerror=()=>res(null);
+    img.src=dataUrl;
+  });
+}
 async function setPhoto(dataUrl){
-  photoData=dataUrl; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
-  photoMeta=await analyzePhoto(photoData);
+  const norm=await normalizePhoto(dataUrl);
   const pc=document.getElementById('photoCheck');
-  if(pc&&photoMeta){ pc.innerHTML='<b>Photo Evidence Check</b> (on-device, automated): '+photoCheckText(photoMeta)+'<br><span id="geoLine" style="color:var(--muted)">📍 Geo-tagging this photo with your current location…</span><br><span style="color:var(--muted)">Quality analysis only — hazard content detection is the production Vision step. Photo adds +10 credibility.</span>'; pc.style.display='block'; }
-  toast('Photo attached: +10 credibility — evidence quality check '+(photoMeta?('done: '+(photoMeta.flags.length?photoMeta.flags.length+' flag(s)':'clean')):'unavailable'));
+  if(!norm){
+    if(pc){ pc.innerHTML='<b>⚠ This photo could not be opened by the browser.</b> Some phones save gallery photos in a format web pages cannot read. Please use <b>📷 Take Photo</b> instead — it always works.'; pc.style.display='block'; }
+    toast('That photo could not be opened — please use Take Photo instead');
+    return;
+  }
+  photoData=norm.url;
+  const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
+  setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
+  photoMeta=await analyzePhoto(photoData);
+  if(photoMeta){ photoMeta.w=norm.w; photoMeta.h=norm.h; }
+  if(pc){
+    pc.innerHTML = photoMeta
+      ? '<b>✓ Photo attached</b> — <b>Photo Evidence Check</b> (on-device, automated): '+photoCheckText(photoMeta)+'<br><span id="geoLine" style="color:var(--muted)">📍 Geo-tagging this photo with your current location…</span><br><span style="color:var(--muted)">Quality analysis only — hazard content detection is the production Vision step. Photo adds +10 credibility.</span>'
+      : '<b>✓ Photo attached</b> — the automated quality check is unavailable for this image, but the photo is attached and adds +10 credibility.<br><span id="geoLine" style="color:var(--muted)">📍 Geo-tagging this photo with your current location…</span>';
+    pc.style.display='block';
+  }
+  toast('Photo attached ✓ — preview is shown in the form');
   stampGeoTag();
 }
 let geoLoc=null, geoLocTs=0;
