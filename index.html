@@ -136,7 +136,7 @@ html{scroll-behavior:smooth}
 <div class="main">
 <!-- CITIZEN -->
 <div class="panel fx" id="complain">
-<h2>Report a Problem</h2><p class="sub">Takes 30 seconds. No sign-up. Type in English, ಕನ್ನಡ or हिन्दी — just like a WhatsApp message — and the AI routes it to the right department for you.</p>
+<h2>Report a Problem <span class="kannada" style="font-size:15px;color:var(--muted);font-weight:600">· ಸಮಸ್ಯೆಯನ್ನು ವರದಿ ಮಾಡಿ</span></h2><p class="sub">Takes 30 seconds. No sign-up. Type in English, ಕನ್ನಡ or हिन्दी — just like a WhatsApp message — and the AI routes it to the right department for you.</p>
 <div class="steps"><span class="step"><span>1</span> · Describe it</span><span class="step"><span>2</span> · Snap a photo</span><span class="step"><span>3</span> · Submit — AI does the rest</span></div>
 <label>One-click demos for the jury</label>
 <div class="demo-btns">
@@ -171,6 +171,15 @@ html{scroll-behavior:smooth}
 <div id="aiResult"></div>
 <button class="shimmer" onclick="submitComplaint()">Submit &amp; Run AI Triage</button>
 <p style="font-size:12px;color:var(--muted);line-height:1.6">Language detection · Category · Severity + reason · Department routing · Duplicate check · Vague check</p>
+<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+<label>Track your complaint · <span class="kannada">ನಿಮ್ಮ ದೂರನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ</span></label>
+<div style="display:flex;gap:8px">
+<input type="text" id="trackId" placeholder="Enter Ticket ID — e.g. CL-2026-1048" style="flex:1;padding:11px;border-radius:10px">
+<button type="button" class="photobtn alt" style="flex:0 0 auto;padding:10px 18px" onclick="trackTicket()">Track</button>
+</div>
+<div id="trackResult"></div>
+<p style="font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px">Modelled on Karnataka's Praja Seve (iPGRS): citizens can also reach these same departments via helpline <b>1902</b> and Bangalore One / Grama One centres. FixFirst adds the AI triage those channels lack — fusion, explainable priority and SLA escalation.</p>
+</div>
 </div>
 
 <!-- OFFICER -->
@@ -456,6 +465,14 @@ function submitComplaint(){
 
 let lastComplaint='';
 function fmtClock(sec){ const m=Math.floor(sec/60), ss=sec%60; return m+':'+String(ss).padStart(2,'0'); }
+function trackTicket(){
+  const id=document.getElementById('trackId').value.trim().toUpperCase();
+  const box=document.getElementById('trackResult'); if(!box) return;
+  if(!id){ box.innerHTML=''; return; }
+  const t=tickets.find(x=>x.id.toUpperCase()===id);
+  if(!t){ box.innerHTML='<div class="result vague" style="margin-top:10px"><b>Ticket not found.</b> Check the ID from your submission — it looks like CL-2026-1048. (Demo data resets when the page reloads.)</div>'; return; }
+  box.innerHTML='<div class="result ok" style="margin-top:10px"><b>'+t.id+' — '+t.category+'</b><br>Status: <b>'+t.status+'</b>'+(t.escalated?' — escalated to the Ward Engineer, citizen notified by SMS':'')+'<br>Department: <b>'+t.dept+'</b> · Severity: <b>'+t.severity+'</b> · Priority: <b>'+t.priority+'/100</b><br>SLA: <b>'+(t.sla||'3 days')+'</b> · Reported '+(t.time||'')+' · '+t.duplicates+' citizen report(s) on this Incident</div>';
+}
 function escalateTicket(id,silent){
   const t=tickets.find(x=>x.id===id); if(!t||t.escalated) return;
   t.escalated=true; t.status='ESCALATED';
