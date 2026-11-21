@@ -338,11 +338,12 @@ document.getElementById('photoCam').addEventListener('change',e=>handlePhotoFile
 let camStream=null;
 async function openCamera(){
   const panel=document.getElementById('camPanel');
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ document.getElementById('photoCam').click(); return; }
+  const fallback=()=>{ toast('Live camera not available on this device/browser — opening the camera / photo picker instead'); document.getElementById('photoCam').click(); };
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ fallback(); return; }
   try{
-    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    camStream=await Promise.race([navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}), new Promise((_,rej)=>setTimeout(()=>rej(new Error('camera timeout')),4000))]);
     document.getElementById('camVideo').srcObject=camStream; panel.style.display='block';
-  }catch(e){ document.getElementById('photoCam').click(); }
+  }catch(e){ fallback(); }
 }
 function closeCamera(){ if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; } const panel=document.getElementById('camPanel'); if(panel) panel.style.display='none'; }
 function snapPhoto(){
