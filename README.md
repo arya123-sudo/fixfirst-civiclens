@@ -14,7 +14,7 @@ Citizens report potholes, garbage, broken streetlights, water leaks and fallen t
 ## Our Unique Angle (Why we are different from 100+ teams)
 Most teams build a form → AI label → list. FixFirst solves the *real* triage failures:
 
-1. **Duplicate Cluster Engine** — Same pothole reported 12 times becomes 1 master ticket, not 12 buried tickets. Community count boosts priority and saves officer time (shown live in dashboard: "Duplicates Merged" + "Hours Saved").
+1. **Incident Fusion Engine** — Complaints about the same real-world problem fuse into one **Incident** with supporting reports, scored on 4 signals: Location (30) + Category (15) + Semantic similarity (40) + Time window (15). **75+ auto-merges, 50–74 goes to a human Review Queue, below 50 creates a new Incident** — never a silent wrong merge. Life-safety rule: a Critical hazard always raises its own Incident immediately; fusion never delays it.
 2. **Vulnerable-Zone Escalation** — A hazard near a School/Hospital is automatically more severe than the same hazard in an empty area. Context-aware severity, not keyword-only.
 3. **Photo Credibility Check** — Photo attached = +10 priority as a presence/credibility signal today. Honest scope: production adds a Vision API for actual hazard detection in the image; the prototype does not claim image analysis it doesn't do.
 4. **Explainable Priority Score 0–100** — Every ticket shows its breakdown: Severity (0-40) + Zone (8-20) + Community (0-20) + Photo (0/10) + Urgency (15). No black box — officers can defend the order to citizens/councillors.
@@ -38,10 +38,11 @@ Open index.html in any browser
 python3 -m http.server 8000  → http://localhost:8000
 ```
 ## Demo Flow (2 minutes)
-1. Click **⚡ LIVE WIRE Near School** → Submit → Critical, BESCOM, Priority 90 (Severity 55 incl. danger bonus + Zone 20 + Urgency 15 = 90; with a photo it reaches 100)
-2. Click **🇮🇳 KANNADA Garbage** → Submit → Language detected Kannada, Waste, BBMP SWM
-3. Click **🔁 DUPLICATE Same Pothole** → Submit → "DUPLICATE DETECTED — Merged into CL-2026-1042, priority boosted" — this is the wow moment
-4. Scroll dashboard — tickets re-sort by priority, explain breakdown
+1. Click **Live Wire Near School** → Submit → NEW Critical Incident, BESCOM, Priority 90 (fusion is bypassed for life-safety — it never waits in a queue)
+2. Click **Kannada Garbage** → Submit → Language detected Kannada; Fusion scores it 60/100 vs the existing Dasarahalli garbage Incident (semantic signal is weak across languages) → it lands in the officer **Review Queue** — click *Keep Separate* or *Merge*, a human decides
+3. Click **Duplicate Same Pothole** → Submit → Fusion 84/100 → **AUTO-MERGED** into the master Incident, supporting reports +1, priority boosted
+4. Click **Vague "Road bad"** → Submit → no guessing: 3 clarifying follow-ups with 1-tap detail chips
+5. On any Critical/High ticket, watch the SLA countdown — or click **Simulate half-SLA** to see it flip to ESCALATED live
 
 ## Tech
 Single-file HTML/CSS/JS prototype, rule-based triage engine designed from LLM prompting iterations, Git versioned during event.
