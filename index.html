@@ -65,11 +65,11 @@ textarea{min-height:112px;resize:vertical} textarea:focus,select:focus{outline:2
 .ring{flex:none;text-align:center}
 .ring svg{transform:rotate(-90deg)} .ring .rv{font-family:"Space Grotesk";font-weight:700;font-size:17px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
-.chip{background:#0d1117;border:1px solid var(--line);color:var(--muted);padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.chip{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600}
 .chip.sev-Critical{color:#fff;background:var(--red);border-color:var(--red)} .chip.sev-High{color:#fff;background:var(--orange);border-color:var(--orange)} .chip.sev-Medium{color:#161006;background:var(--yellow);border-color:var(--yellow)} .chip.sev-Low{color:#06130b;background:var(--green);border-color:var(--green)}
 .chip.dept{color:var(--amber);border-color:rgba(245,165,36,.4)}
-.reason{background:#0d1117;border:1px solid var(--line);border-left:3px solid var(--amber);padding:12px;border-radius:10px;font-size:13px;line-height:1.6;color:#c9ced6}
-.breakdown{margin-top:12px;font-size:12px;color:var(--muted)} .bar{height:6px;background:#0d1117;border-radius:999px;overflow:hidden;margin:6px 0 4px;border:1px solid var(--line)} .bar i{display:block;height:100%;background:var(--amber);width:0;transition:width 1s cubic-bezier(.22,1,.36,1)}
+.reason{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--amber);padding:12px;border-radius:10px;font-size:13px;line-height:1.6;color:var(--ink)}
+.breakdown{margin-top:12px;font-size:12px;color:var(--muted)} .bar{height:6px;background:#ece7db;border-radius:999px;overflow:hidden;margin:6px 0 4px;border:1px solid var(--line)} .bar i{display:block;height:100%;background:var(--amber);width:0;transition:width 1s cubic-bezier(.22,1,.36,1)}
 .photo{width:100%;max-height:190px;object-fit:cover;border-radius:12px;margin-top:10px;border:1px solid var(--line)}
 .actions{display:flex;gap:8px;margin-top:12px} .actions button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:600;cursor:pointer;font-size:13px}
 .actions button:hover{border-color:var(--amber)}
@@ -658,7 +658,7 @@ async function liveAICheck(){
 }
 function setFilter(f,el){filter=f; document.querySelectorAll('#filters button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); render()}
 function cycleStatus(id){ const t=tickets.find(x=>x.id===id); t.status=(t.status==='Open'||t.status==='ESCALATED')?'Assigned':t.status==='Assigned'?'Resolved':'Open'; if(t.status!=='Open') t.escalated=t.escalated&&false; render(); }
-function ringSVG(p,sev){ const c={Critical:'#f31260',High:'#f97316',Medium:'#eab308',Low:'#17c964'}[sev]||'#f5a524'; const r=26,circ=2*Math.PI*r,off=circ-(p/100)*circ; return `<svg width="64" height="64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="#232b38" stroke-width="6"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg>` }
+function ringSVG(p,sev){ const c={Critical:'#f31260',High:'#f97316',Medium:'#eab308',Low:'#17c964'}[sev]||'#f5a524'; const r=26,circ=2*Math.PI*r,off=circ-(p/100)*circ; return `<svg width="64" height="64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="#e7e1d3" stroke-width="6"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg>` }
 function setCount(id,val){ const el=document.getElementById(id); if(window.gsap){ const o={v:parseInt(el.textContent)||0}; gsap.to(o,{v:val,duration:.8,ease:'power2.out',onUpdate:()=>el.textContent=Math.round(o.v)}) } else el.textContent=val; }
 function render(){
   renderReview();
