@@ -43,7 +43,8 @@ python3 -m http.server 8000  → http://localhost:8000
 4. Scroll dashboard — tickets re-sort by priority, explain breakdown
 
 ## Tech
-Single-file HTML/CSS/JS prototype (intentionally dependency-free for 4-hour reliability), rule-based triage engine designed from LLM prompting iterations, Git versioned during event.
+Single-file HTML/CSS/JS prototype, rule-based triage engine designed from LLM prompting iterations, Git versioned during event.
+**Next-level design layer (v2):** Three.js particle-cluster background (ThreeUI-style), GSAP + ScrollTrigger choreography, TasteSkill art direction (one palette — warm dark ink + amber; colour spent on severity data; quiet dashboard panels), 21st.dev component patterns (bento grid, shimmer button, number-ticker stats, SVG priority rings). Every enhancement is guarded — if venue WiFi/CDNs fail, animations degrade and the triage engine still works 100% offline.
 
 ## AI Tools Used
 Muse / ChatGPT-class GenAI for ideation, triage logic design, code generation & iteration — full prompt log in PROMPT_LOG.md, full chat history submitted separately as required.

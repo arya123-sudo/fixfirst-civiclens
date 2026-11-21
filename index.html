@@ -3,109 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FixFirst — CivicLens AI Triage | Tech Habba</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+Kannada:wght@400;700&display=swap" rel="stylesheet">
+<title>FixFirst — CivicLens AI Triage | Team Neon Pulse | Tech Habba</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Kannada:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <style>
-*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f6f7fb;color:#111827}
-header{background:#0f2040;color:#fff;padding:18px 20px;position:sticky;top:0;z-index:10}
-.header-in{max-width:1180px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-.logo{font-size:28px;font-weight:900;letter-spacing:-.5px} .logo span{color:#fbbf24}
-.tag{opacity:.85;font-size:13px;margin-top:2px}
-.badge{background:#dc2626;color:#fff;padding:8px 12px;border-radius:999px;font-weight:800;font-size:12px}
-.hero{max-width:1180px;margin:22px auto 0;padding:0 16px}
-.hero-card{background:linear-gradient(135deg,#fff7ed,#eff6ff);border:2px solid #f59e0b;border-radius:18px;padding:20px}
-.hero-card h1{margin:0;font-size:28px;line-height:1.15} .hero-card p{color:#374151;line-height:1.6}
-.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
-.pillar{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px} .pillar b{display:block;margin-bottom:6px} .pillar p{font-size:13px;margin:0;color:#4b5563;line-height:1.5}
-.main{max-width:1180px;margin:18px auto;padding:0 16px 30px;display:grid;grid-template-columns:420px 1fr;gap:16px}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,.04)}
-.card h2{margin:0 0 6px;font-size:19px} .sub{font-size:13px;color:#6b7280;line-height:1.5;margin-bottom:14px}
-label{font-weight:700;font-size:13px;display:block;margin:14px 0 6px}
-textarea,select,input{width:100%;padding:12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:14px;font-family:inherit}
-textarea{min-height:110px;resize:vertical}
-.btn{width:100%;background:#0f2040;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;margin-top:16px}
-.btn:hover{background:#1d355f} .btn-orange{background:#ea580c}
-.demo-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.demo-btns button{padding:10px 6px;border-radius:10px;border:1px solid #ddd;background:#fff;font-weight:700;font-size:12px;cursor:pointer;line-height:1.3}
-.demo-btns button:hover{border-color:#0f2040;background:#eff6ff}
+/* TasteSkill direction: one palette — warm dark ink + single amber accent. Colour is spent on DATA (severity), not decoration. Quiet panels, aligned figures, huge display type. */
+:root{--bg:#0b0e12;--panel:#12161d;--panel2:#171d27;--line:#232b38;--ink:#e8e6e1;--muted:#9aa3af;--amber:#f5a524;--red:#f31260;--orange:#f97316;--yellow:#eab308;--green:#17c964}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+#bg3d{position:fixed;inset:0;z-index:0;opacity:.55;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:0;z-index:20;background:rgba(11,14,18,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.header-in{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-family:"Space Grotesk";font-weight:700;font-size:22px;letter-spacing:-.02em}.brand em{font-style:normal;color:var(--amber)}
+.teamline{font-size:12px;color:var(--muted);margin-top:2px}
+.live{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(243,18,96,.5)}70%{box-shadow:0 0 0 9px rgba(243,18,96,0)}100%{box-shadow:0 0 0 0 rgba(243,18,96,0)}}
+/* Bento hero — 21st.dev pattern: one monument tile + specimen tiles, edge to edge */
+.bento{display:grid;grid-template-columns:1.6fr 1fr 1fr;grid-auto-rows:minmax(120px,auto);gap:12px;margin:26px 0 8px}
+.tile{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:24px;position:relative;overflow:hidden}
+.tile.monument{grid-row:span 2;display:flex;flex-direction:column;justify-content:flex-end;min-height:300px}
+.monument h1{font-family:"Space Grotesk";font-size:clamp(44px,6vw,76px);line-height:.95;margin:0;letter-spacing:-.03em}
+.monument h1 em{font-style:normal;color:var(--amber)}
+.monument p{color:var(--muted);line-height:1.65;max-width:52ch;margin:16px 0 0;font-size:15px}
+.tile h3{margin:0 0 8px;font-size:16px;font-family:"Space Grotesk"}
+.tile p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+.tile .num{font-family:"Space Grotesk";font-size:13px;color:var(--amber);letter-spacing:.15em;font-weight:700}
+.kicker{font-size:12px;letter-spacing:.22em;font-weight:700;color:var(--amber);text-transform:uppercase;margin-bottom:14px}
+.main{display:grid;grid-template-columns:430px 1fr;gap:14px;margin:18px 0 40px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px}
+.panel h2{font-family:"Space Grotesk";margin:0 0 6px;font-size:20px;letter-spacing:-.01em}
+.sub{font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 8px}
+label{font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin:16px 0 7px}
+textarea,select,input[type=file]{width:100%;padding:13px;background:#0d1117;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink)}
+textarea{min-height:112px;resize:vertical} textarea:focus,select:focus{outline:2px solid var(--amber);border-color:transparent}
+.demo-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.demo-btns button{padding:11px 8px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:600;font-size:12px;cursor:pointer;line-height:1.4;transition:.2s}
+.demo-btns button:hover{border-color:var(--amber);transform:translateY(-1px)}
+/* Shimmer button — 21st.dev pattern */
+.shimmer{position:relative;overflow:hidden;width:100%;background:var(--amber);color:#161006;border:none;padding:15px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;margin-top:18px;font-family:inherit}
+.shimmer::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);animation:shim 2.8s infinite}
+@keyframes shim{60%,100%{transform:translateX(120%)}}
+.shimmer:hover{filter:brightness(1.07)}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-.stat{background:#0f2040;color:#fff;border-radius:14px;padding:14px;text-align:center} .stat.red{background:#dc2626} .stat.green{background:#059669} .stat.amber{background:#d97706}
-.stat b{font-size:26px;display:block} .stat span{font-size:11px;opacity:.9;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-.filters button{padding:8px 12px;border-radius:999px;border:1px solid #d1d5db;background:#fff;font-weight:700;cursor:pointer;font-size:13px}
-.filters button.active{background:#0f2040;color:#fff}
-.ticket{border:1.5px solid #e5e7eb;border-left:6px solid #9ca3af;border-radius:14px;padding:16px;margin-bottom:12px;background:#fff}
-.ticket.Critical{border-left-color:#dc2626} .ticket.High{border-left-color:#ea580c} .ticket.Medium{border-left-color:#f59e0b} .ticket.Low{border-left-color:#059669}
-.t-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap} .t-id{font-weight:900;color:#0f2040}
-.score{background:#111827;color:#fff;padding:6px 10px;border-radius:999px;font-weight:900;font-size:13px}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0} .chip{background:#eef2ff;color:#3730a3;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700} .chip.red{background:#fef2f2;color:#b91c1c} .chip.green{background:#ecfdf5;color:#065f46} .chip.amber{background:#fffbeb;color:#92400e}
-.reason{background:#fffbeb;border:1px solid #fde68a;padding:10px;border-radius:10px;font-size:13px;line-height:1.5}
-.breakdown{margin-top:10px;font-size:12px;color:#374151} .bar{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:4px 0 8px} .bar i{display:block;height:100%;background:#0f2040}
-.photo{width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-top:10px;border:1px solid #ddd}
-.actions{display:flex;gap:8px;margin-top:10px} .actions button{flex:1;padding:9px;border-radius:9px;border:1px solid #d1d5db;background:#fff;font-weight:700;cursor:pointer}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#111827;color:#fff;padding:14px 18px;border-radius:12px;font-weight:700;max-width:92%;display:none;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.3);line-height:1.5}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.stat b{font-family:"Space Grotesk";font-size:32px;display:block;letter-spacing:-.02em}
+.stat span{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.stat.crit b{color:var(--red)} .stat.dup b{color:var(--green)} .stat.saved b{color:var(--amber)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.filters button{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:600;cursor:pointer;font-size:13px}
+.filters button.active{background:var(--ink);color:#0b0e12;border-color:var(--ink)}
+.ticket{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:12px}
+.t-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.t-id{font-weight:700;font-size:13px;color:var(--muted);letter-spacing:.04em}
+.t-text{margin:8px 0 4px;line-height:1.65;font-size:15px}
+.ring{flex:none;text-align:center}
+.ring svg{transform:rotate(-90deg)} .ring .rv{font-family:"Space Grotesk";font-weight:700;font-size:17px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.chip{background:#0d1117;border:1px solid var(--line);color:var(--muted);padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.chip.sev-Critical{color:#fff;background:var(--red);border-color:var(--red)} .chip.sev-High{color:#fff;background:var(--orange);border-color:var(--orange)} .chip.sev-Medium{color:#161006;background:var(--yellow);border-color:var(--yellow)} .chip.sev-Low{color:#06130b;background:var(--green);border-color:var(--green)}
+.chip.dept{color:var(--amber);border-color:rgba(245,165,36,.4)}
+.reason{background:#0d1117;border:1px solid var(--line);border-left:3px solid var(--amber);padding:12px;border-radius:10px;font-size:13px;line-height:1.6;color:#c9ced6}
+.breakdown{margin-top:12px;font-size:12px;color:var(--muted)} .bar{height:6px;background:#0d1117;border-radius:999px;overflow:hidden;margin:6px 0 4px;border:1px solid var(--line)} .bar i{display:block;height:100%;background:var(--amber);width:0;transition:width 1s cubic-bezier(.22,1,.36,1)}
+.photo{width:100%;max-height:190px;object-fit:cover;border-radius:12px;margin-top:10px;border:1px solid var(--line)}
+.actions{display:flex;gap:8px;margin-top:12px} .actions button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:600;cursor:pointer;font-size:13px}
+.actions button:hover{border-color:var(--amber)}
+.result{border-radius:14px;padding:15px;margin-top:16px;line-height:1.65;font-size:14px;border:1px solid}
+.result.ok{background:rgba(23,201,100,.08);border-color:rgba(23,201,100,.45)} .result.dup{background:rgba(243,18,96,.08);border-color:rgba(243,18,96,.5)} .result.vague{background:rgba(245,165,36,.08);border-color:rgba(245,165,36,.55)}
+.result button{margin:6px 4px 0 0;padding:8px 10px;border-radius:9px;border:1px solid var(--amber);background:transparent;color:var(--ink);font-weight:600;cursor:pointer}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--ink);color:#0b0e12;padding:14px 18px;border-radius:12px;font-weight:700;max-width:92%;display:none;z-index:60;box-shadow:0 16px 40px rgba(0,0,0,.5);line-height:1.5;font-size:14px}
+footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);font-size:12px;line-height:1.7}
 .kannada{font-family:"Noto Sans Kannada",Inter,sans-serif}
-@media(max-width:900px){.main{grid-template-columns:1fr}.pillars{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:940px){.main{grid-template-columns:1fr}.bento{grid-template-columns:1fr 1fr}.tile.monument{grid-column:span 2}.stats{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-<header><div class="header-in"><div><div class="logo">Fix<span>First</span> 🇮🇳</div><div class="tag">Team Neon Pulse • CivicLens AI Triage • Tech Habba — Prompt to Product • Acharya<br><span style="font-size:12px;opacity:.9">Rohan P (Team Leader) • Arya Yaligar • Shiva Prasad</span></div></div><div class="badge">🔴 LIVE TRIAGE ENGINE</div></div></header>
+<canvas id="bg3d"></canvas>
+<header><div class="header-in">
+<div><div class="brand">Fix<em>First</em></div><div class="teamline">Team Neon Pulse — Rohan P (Leader) · Arya Yaligar · Shiva Prasad · Tech Habba, Acharya</div></div>
+<div class="live"><span class="dot"></span> LIVE TRIAGE ENGINE</div>
+</div></header>
 
-<div class="hero"><div class="hero-card">
-<h1>One Issue. One Ticket. Fixed First — Where It Matters Most.</h1>
-<p>100 teams will build a complaint form. <b>We fix the real municipal problem:</b> 40% of complaints are duplicates, and a pothole near a school is NOT the same as a pothole on an empty road. FixFirst merges duplicates, verifies hazards from photos, and escalates by <b>vulnerable-zone proximity</b> — with an explainable 0–100 Priority Score an officer can trust.</p>
-<div class="pillars">
-<div class="pillar"><b>🔁 Duplicate Cluster Engine</b><p>Same pothole reported 12 times = 1 super-ticket, not 12 buried tickets. Community count boosts priority.</p></div>
-<div class="pillar"><b>🏫 Vulnerable-Zone Escalation</b><p>Near school / hospital / old-age home? Severity auto-upgrades. Context, not just keywords.</p></div>
-<div class="pillar"><b>📸 HazardEye Photo Check</b><p>Photo attached = verified credibility + hazard boost. Officers see proof, not just text.</p></div>
-<div class="pillar"><b>🧮 Explainable Priority 0–100</b><p>Every score shows its breakdown: Severity + Zone + Community + Photo. No black box.</p></div>
-</div></div></div>
+<div class="wrap">
+<!-- BENTO HERO -->
+<section class="bento">
+<div class="tile monument fx"><div class="kicker">CivicLens · AI Triage for Citizen Complaints</div>
+<h1>One issue.<br>One ticket.<br><em>Fixed first.</em></h1>
+<p>100 teams will build a complaint form. We fix the real failure: 40% of reports are duplicates, and a pothole near a school is not a pothole on an empty road. FixFirst merges, verifies and escalates — with a priority score an officer can defend.</p></div>
+<div class="tile fx"><div class="num">01</div><h3>Duplicate Cluster Engine</h3><p>Same pothole reported 12 times becomes one master ticket. Community count raises priority instead of burying it.</p></div>
+<div class="tile fx"><div class="num">02</div><h3>Vulnerable-Zone Escalation</h3><p>Near a school or hospital, severity upgrades automatically. Context, not just keywords.</p></div>
+<div class="tile fx"><div class="num">03</div><h3>Vague? We Ask, Not Guess</h3><p>“Road bad” triggers 3 clarifying follow-ups with one-tap detail chips — judgment, not blind classification.</p></div>
+<div class="tile fx"><div class="num">04</div><h3>Explainable Score 0–100</h3><p>Severity + Zone + Community + Photo. Every point shown. Plus SLA timers with auto-escalation to the Ward Engineer.</p></div>
+</section>
 
 <div class="main">
-<!-- CITIZEN FORM -->
-<div class="card">
-<h2>📝 Citizen Complaint</h2><p class="sub">English, ಕನ್ನಡ or हिन्दी — type as you would on WhatsApp. Add a photo & location. AI does the rest in &lt;2 seconds.</p>
-
-<label>Try a 1-click demo for judges</label>
+<!-- CITIZEN -->
+<div class="panel fx">
+<h2>Citizen Complaint</h2><p class="sub">English, ಕನ್ನಡ or हिन्दी — type it like a WhatsApp message. Add a photo and what is nearby. The triage runs in under two seconds, offline-safe.</p>
+<label>One-click demos for the jury</label>
 <div class="demo-btns">
-<button onclick="loadDemo('critical')">⚡ LIVE WIRE<br>Near School</button>
-<button onclick="loadDemo('kannada')">🇮🇳 KANNADA<br>Garbage Complaint</button>
-<button onclick="loadDemo('duplicate')">🔁 DUPLICATE<br>Same Pothole</button>
-<button onclick="loadDemo('vague')">❓ VAGUE<br>"Road bad" Test</button>
+<button onclick="loadDemo('critical')">Live wire near school</button>
+<button onclick="loadDemo('kannada')">Kannada garbage complaint</button>
+<button onclick="loadDemo('duplicate')">Duplicate — same pothole</button>
+<button onclick="loadDemo('vague')">Vague — “road bad”</button>
 </div>
-
 <label>Your complaint *</label>
-<textarea id="complaint" placeholder="Example: Big pothole near Acharya gate, bikes are falling daily... OR: ಶಾಲೆಯ ಹತ್ತಿರ ರಸ್ತೆಯಲ್ಲಿ ದೊಡ್ಡ ಗುಂಡಿ ಇದೆ"></textarea>
-
+<textarea id="complaint" placeholder="Example: Big pothole near Acharya gate, bikes are falling daily… OR: ಶಾಲೆಯ ಹತ್ತಿರ ರಸ್ತೆಯಲ್ಲಿ ದೊಡ್ಡ ಗುಂಡಿ ಇದೆ"></textarea>
 <label>Area / Ward</label>
-<select id="location">
-<option>Soladevanahalli — Acharya Gate</option><option>Hesaraghatta Main Road</option><option>Peenya Industrial Area</option><option>Dasarahalli</option><option>Chikkabanavara</option><option>Yeshwanthpur</option>
-</select>
-
-<label>What's nearby? (This changes priority!)</label>
-<select id="landmark">
-<option value="School">🏫 School / College</option><option value="Hospital">🏥 Hospital / Clinic</option><option value="Residential" selected>🏠 Residential Area</option><option value="Market">🛒 Market / Bus Stop</option><option value="Highway">🛣️ Highway / Main Road</option><option value="WaterBody">💧 Lake / Drinking Water Source</option>
-</select>
-
-<label>Photo (optional — boosts verification)</label>
+<select id="location"><option>Soladevanahalli — Acharya Gate</option><option>Hesaraghatta Main Road</option><option>Peenya Industrial Area</option><option>Dasarahalli</option><option>Chikkabanavara</option><option>Yeshwanthpur</option></select>
+<label>What is nearby? This changes priority</label>
+<select id="landmark"><option value="School">School / College</option><option value="Hospital">Hospital / Clinic</option><option value="Residential" selected>Residential Area</option><option value="Market">Market / Bus Stop</option><option value="Highway">Highway / Main Road</option><option value="WaterBody">Lake / Drinking Water Source</option></select>
+<label>Photo — optional, adds verification</label>
 <input type="file" id="photo" accept="image/*">
 <img id="preview" class="photo" style="display:none">
 <div id="aiResult"></div>
-<button class="btn btn-orange" onclick="submitComplaint()">🚀 Submit & Run AI Triage</button>
-<p style="font-size:12px;color:#6b7280;line-height:1.5">✓ Auto language detection &nbsp; ✓ Category &nbsp; ✓ Severity + reason &nbsp; ✓ Department routing &nbsp; ✓ Duplicate check</p>
+<button class="shimmer" onclick="submitComplaint()">Submit &amp; Run AI Triage</button>
+<p style="font-size:12px;color:var(--muted);line-height:1.6">Language detection · Category · Severity + reason · Department routing · Duplicate check · Vague check</p>
 </div>
 
-<!-- OFFICER DASHBOARD -->
+<!-- OFFICER -->
 <div>
 <div class="stats">
-<div class="stat"><b id="sTotal">0</b><span>Total Tickets</span></div>
-<div class="stat red"><b id="sCrit">0</b><span>Critical</span></div>
-<div class="stat green"><b id="sDup">0</b><span>Duplicates Merged</span></div>
-<div class="stat amber"><b id="sSaved">0 hrs</b><span>Officer Time Saved</span></div>
+<div class="stat fx"><b data-count id="sTotal">0</b><span>Total Tickets</span></div>
+<div class="stat crit fx"><b data-count id="sCrit">0</b><span>Critical</span></div>
+<div class="stat dup fx"><b data-count id="sDup">0</b><span>Duplicates Merged</span></div>
+<div class="stat saved fx"><b id="sSaved">0 hrs</b><span>Officer Time Saved</span></div>
 </div>
-
-<div class="card">
-<h2>👮 Municipal Officer Dashboard</h2><p class="sub">Sorted by <b>Explainable Priority Score</b> — not by who complained first. Critical & high-community-impact issues float to the top automatically.</p>
+<div class="panel fx">
+<h2>Municipal Officer Dashboard</h2><p class="sub">Sorted by explainable priority — not by who complained first. Critical and high-community-impact work floats to the top automatically.</p>
 <div class="filters" id="filters">
 <button class="active" onclick="setFilter('All',this)">All</button><button onclick="setFilter('Critical',this)">Critical</button><button onclick="setFilter('Roads',this)">Roads</button><button onclick="setFilter('Waste',this)">Waste</button><button onclick="setFilter('Water',this)">Water</button><button onclick="setFilter('Electricity',this)">Electricity</button><button onclick="setFilter('Drainage',this)">Drainage</button><button onclick="setFilter('Trees',this)">Trees</button>
 </div>
@@ -114,15 +142,16 @@ textarea{min-height:110px;resize:vertical}
 </div>
 </div>
 
+<footer>FixFirst — Team Neon Pulse · Tech Habba “Prompt to Product”, Acharya Institute of Technology · Design direction informed by TasteSkill (one palette, type as layout, quiet dashboard panels) · Motion: GSAP · 3D background: Three.js (ThreeUI-style particle field) · Component patterns (bento grid, shimmer button, number ticker, score ring): 21st.dev · All triage logic original, built in the event window. Works fully offline if CDNs are unreachable — animations degrade, triage never does.</footer>
+</div>
 <div class="toast" id="toast"></div>
 
-<script>
+<script id="logic">
 let photoData=null, dupMergedTotal=0, filter='All', seq=1042;
 document.getElementById('photo').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=ev=>{photoData=ev.target.result; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block'; toast('📸 Photo attached — HazardEye: credibility +10 priority points')}; r.readAsDataURL(f);
+  const r=new FileReader(); r.onload=ev=>{photoData=ev.target.result; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block'; toast('Photo attached — HazardEye verification: +10 priority points')}; r.readAsDataURL(f);
 });
-
 const CATS={
  Roads:{dept:'BBMP — Roads & Infrastructure',keys:['pothole','road','tar','asphalt','speed breaker','footpath','ಗುಂಡಿ','ರಸ್ತೆ','गड्ढा','सड़क','gundi','sadak','hole in road','broken road','accident']},
  Waste:{dept:'BBMP — Solid Waste Management (SWM)',keys:['garbage','waste','dustbin','trash','litter','smell','ಕಸ','कचरा','kasa','kachra','overflowing bin','dump']},
@@ -133,19 +162,15 @@ const CATS={
 };
 const CRIT=['live wire','exposed wire','sparking','electric shock','open manhole','tree fell on','tree fallen on','children','school kids','burst pipe','major leak','electrocut'];
 const HIGH=['pothole','accident','falling','fall daily','overflow','flooding','no water','dark street','dark','sewage','dangerous','injured','hospital','blocking'];
-
 let tickets=[
  mkSeed('Big pothole near Acharya main gate, two bikes fell yesterday evening','Soladevanahalli — Acharya Gate','School','Roads'),
- mkSeed('Pothole on Hesaraghatta main road near Acharya gate, very dangerous for bikes','Soladevanahalli — Acharya Gate','School','Roads'),
  mkSeed('Garbage overflowing for 4 days near bus stop, bad smell, dogs scattering waste','Dasarahalli','Market','Waste'),
  mkSeed('Streetlight not working for a week, road fully dark at night near hostel','Soladevanahalli — Acharya Gate','Residential','Electricity'),
  mkSeed('Water pipe leak, clean water wasting and road flooding near market','Peenya Industrial Area','Market','Water'),
  mkSeed('Fallen tree branch blocking half the road after rain','Chikkabanavara','Residential','Trees'),
  mkSeed('Drainage overflow, sewage water entering homes during rain','Yeshwanthpur','Residential','Drainage'),
 ];
- // merge first two seeds as cluster demo
- tickets[0].duplicates=3; tickets[0].priority=Math.min(100,tickets[0].priority+15); tickets.splice(1,1); dupMergedTotal=3;
-
+tickets[0].duplicates=3; tickets[0].priority=Math.min(100,tickets[0].priority+15); tickets[0].breakdown.communityPts=15; dupMergedTotal=3;
 function mkSeed(text,loc,land,forceCat){
   const t=triage(text,land,false,loc); if(forceCat){t.category=forceCat; t.dept=CATS[forceCat].dept}
   return {id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:null,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
@@ -159,12 +184,10 @@ function triage(text,landmark,hasPhoto,loc){
   if(CRIT.some(k=>low.includes(k)) || (best==='Electricity' && (low.includes('wire')||low.includes('sparking')) && landmark==='School')){severity='Critical';sevPts=40}
   else if(HIGH.some(k=>low.includes(k))){severity='High';sevPts=30}
   else if(low.includes('small')||low.includes('minor')){severity='Low';sevPts=10}
-  // vulnerable zone boost can upgrade Medium->High, High->Critical in edge case
   let zonePts={School:20,Hospital:20,Highway:15,Market:12,WaterBody:12,Residential:8}[landmark]||8;
-  if(zonePts>=20 && severity==='High' && CRIT.some(k=>low.includes(k))){severity='Critical';sevPts=40}
   let photoPts=hasPhoto?10:0;
   let dangerBonus=severity==='Critical'?15:severity==='High'?8:0;
-  sevPts+=dangerBonus; // danger bonus folded into severity points so breakdown sums to total (Critical near school = 90)
+  sevPts+=dangerBonus;
   let priority=Math.min(100, sevPts+zonePts+photoPts+15);
   let reason = severity==='Critical' ? `Immediate danger to public — ${best.toLowerCase()} hazard near ${landmark.toLowerCase()} requires same-day action.` :
                severity==='High' ? `High risk of accident / health impact near ${landmark.toLowerCase()} — needs priority action within 24 hrs.` :
@@ -175,64 +198,95 @@ function triage(text,landmark,hasPhoto,loc){
 }
 function tokens(text){ return new Set(text.toLowerCase().replace(/[^a-z0-9\u0C80-\u0CFF\u0900-\u097F ]/g,'').split(/\s+/).filter(w=>w.length>2 && !['near','the','and','for','very','daily','road','nearby'].includes(w))) }
 function similarity(a,b){ const A=tokens(a),B=tokens(b); let inter=[...A].filter(x=>B.has(x)).length; return inter/Math.max(1,Math.min(A.size,B.size)); }
-
+function keywordHits(text){ const low=text.toLowerCase(); let h=0; Object.values(CATS).forEach(o=>o.keys.forEach(k=>{if(low.includes(k))h++})); return h; }
+function isVague(text){ const words=text.trim().split(/\s+/).length; const hits=keywordHits(text); const generic=['road bad','bad road','very bad','bad condition','not good'].some(g=>text.toLowerCase().includes(g)); if(hits===0) return true; if(words<=3) return true; if(generic && words<7) return true; return false; }
+function addDetail(txt){ const el=document.getElementById('complaint'); el.value=el.value.replace(/road bad/i,'road')+txt; toast('Detail added — tap Submit again, the AI can route it correctly now'); }
 function loadDemo(type){
   if(type==='critical'){ document.getElementById('complaint').value='Exposed live wire hanging low near school gate, sparking seen in morning, children walk here daily - very dangerous'; document.getElementById('landmark').value='School'; document.getElementById('location').value='Soladevanahalli — Acharya Gate'; }
   if(type==='kannada'){ document.getElementById('complaint').value='ನಮ್ಮ ಮನೆ ಹತ್ತಿರ ಕಸ ತುಂಬಿ ತುಳುಕುತ್ತಿದೆ, 4 ದಿನದಿಂದ ತೆಗೆಯಲಿಲ್ಲ, ತುಂಬಾ ವಾಸನೆ ಬರುತ್ತಿದೆ'; document.getElementById('landmark').value='Residential'; document.getElementById('location').value='Dasarahalli'; }
   if(type==='duplicate'){ document.getElementById('complaint').value='Big pothole near Acharya main gate, bikes falling, please fix urgently'; document.getElementById('landmark').value='School'; document.getElementById('location').value='Soladevanahalli — Acharya Gate'; }
   if(type==='vague'){ document.getElementById('complaint').value='road bad'; document.getElementById('landmark').value='Residential'; }
-  window.scrollTo({top:300,behavior:'smooth'}); toast('Demo loaded — now tap Submit & Run AI Triage 👇');
+  window.scrollTo({top:document.querySelector('.main').offsetTop-70,behavior:'smooth'}); toast('Demo loaded — now tap Submit & Run AI Triage');
 }
-function keywordHits(text){ const low=text.toLowerCase(); let h=0; Object.values(CATS).forEach(o=>o.keys.forEach(k=>{if(low.includes(k))h++})); return h; }
-function isVague(text){ const words=text.trim().split(/\s+/).length; const hits=keywordHits(text); const generic=['road bad','bad road','very bad','bad condition','not good'].some(g=>text.toLowerCase().includes(g)); if(hits===0) return true; if(words<=3) return true; if(generic && words<7) return true; return false; }
-function addDetail(txt){ const el=document.getElementById('complaint'); el.value=el.value.replace(/road bad/i,'road')+txt; toast('Detail added — now tap Submit again, AI can route it correctly ✅'); }
 function submitComplaint(){
   const text=document.getElementById('complaint').value.trim(); if(!text){alert('Please write your complaint');return}
   if(isVague(text)){
-    document.getElementById('aiResult').innerHTML=`<div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;padding:14px;margin-top:14px;line-height:1.6"><b>❓ Too vague to route correctly — we ask, we don't guess.</b><br>Most tools would randomly label this. FixFirst asks 3 follow-ups:<br>1️⃣ What exactly — pothole, crack, waterlogging?<br>2️⃣ Is anyone in danger — accidents, children, wires?<br>3️⃣ Since when?<br><b>Tap to add detail:</b><br><button onclick="addDetail(' — deep pothole, bikes falling daily, since 1 week')" style="margin:6px 4px 0 0;padding:8px;border-radius:8px;border:1px solid #d97706;background:#fff;font-weight:700;cursor:pointer">Pothole + accidents</button><button onclick="addDetail(' — road flooded after rain, vehicles stuck, since yesterday')" style="margin:6px 4px 0 0;padding:8px;border-radius:8px;border:1px solid #d97706;background:#fff;font-weight:700;cursor:pointer">Flooding</button><button onclick="addDetail(' — broken surface near school, children at risk, since 3 days')" style="margin:6px 4px 0 0;padding:8px;border-radius:8px;border:1px solid #d97706;background:#fff;font-weight:700;cursor:pointer">Near school + risk</button></div>`;
-    toast('❓ Vague complaint flagged — clarifying instead of guessing. That is judgment, not just classification.');
+    document.getElementById('aiResult').innerHTML=`<div class="result vague"><b>Too vague to route correctly — we ask, we don't guess.</b><br>Most tools would randomly label this. FixFirst asks 3 follow-ups:<br>1. What exactly — pothole, crack, waterlogging?<br>2. Is anyone in danger — accidents, children, wires?<br>3. Since when?<br><b>Tap to add detail:</b><br><button onclick="addDetail(' — deep pothole, bikes falling daily, since 1 week')">Pothole + accidents</button><button onclick="addDetail(' — road flooded after rain, vehicles stuck, since yesterday')">Flooding</button><button onclick="addDetail(' — broken surface near school, children at risk, since 3 days')">Near school + risk</button></div>`;
+    toast('Vague complaint flagged — clarifying instead of guessing. That is judgment, not just classification.');
     return;
   }
   const loc=document.getElementById('location').value; const land=document.getElementById('landmark').value;
   const t=triage(text,land,!!photoData,loc);
-  // duplicate check
   let dup=null; for(const ex of tickets){ if(ex.category===t.category && ex.loc===loc && similarity(ex.text,text)>=0.28){dup=ex;break} if(ex.category===t.category && similarity(ex.text,text)>=0.55){dup=ex;break} }
   if(dup){
     dup.duplicates++; dupMergedTotal++; dup.breakdown.communityPts=Math.min(20,dup.breakdown.communityPts+5); dup.priority=Math.min(100,dup.priority+5);
-    document.getElementById('aiResult').innerHTML=`<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:12px;padding:14px;margin-top:14px;line-height:1.6"><b>🔁 DUPLICATE DETECTED — Smart Merge!</b><br>This issue already exists as <b>${dup.id}</b>. Instead of creating ticket #${tickets.length+1} and burying it, we merged yours into the master ticket.<br><b>Community reports: ${dup.duplicates} citizens</b> • Priority boosted to <b>${dup.priority}/100</b><br>✅ Officer time saved • ✅ Issue now ranks higher</div>`;
-    toast(`🔁 Duplicate merged into ${dup.id} — Priority now ${dup.priority}/100. That's our winning difference!`);
+    document.getElementById('aiResult').innerHTML=`<div class="result dup"><b>DUPLICATE DETECTED — Smart Merge.</b><br>This issue already exists as <b>${dup.id}</b>. Instead of a new buried ticket, yours merged into the master ticket.<br><b>Community reports: ${dup.duplicates} citizens</b> · Priority boosted to <b>${dup.priority}/100</b><br>Officer time saved — and the issue now ranks higher.</div>`;
+    toast(`Duplicate merged into ${dup.id} — priority now ${dup.priority}/100. That is the winning difference.`);
   } else {
     const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photoData,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
     tickets.unshift(ticket);
-    document.getElementById('aiResult').innerHTML=`<div style="background:#ecfdf5;border:2px solid #059669;border-radius:12px;padding:14px;margin-top:14px;line-height:1.6"><b>✅ AI Triage Complete in 1.8 sec</b><br>🌐 Language: <b>${t.lang}</b> • Category: <b>${t.category}</b> • Severity: <b>${t.severity}</b><br>🏛️ Routed to: <b>${t.dept}</b><br>🎯 Priority Score: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15)<br>💬 Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — citizen can track this.</div>`;
-    toast(`✅ New ticket ${ticket.id} created — ${t.severity} • ${t.category} • Priority ${t.priority}/100`);
+    document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.</div>`;
+    toast(`New ticket ${ticket.id} — ${t.severity} · ${t.category} · Priority ${t.priority}/100`);
   }
   photoData=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value='';
   render();
 }
 function setFilter(f,el){filter=f; document.querySelectorAll('#filters button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); render()}
 function cycleStatus(id){ const t=tickets.find(x=>x.id===id); t.status=t.status==='Open'?'Assigned':t.status==='Assigned'?'Resolved':'Open'; render(); }
+function ringSVG(p,sev){ const c={Critical:'#f31260',High:'#f97316',Medium:'#eab308',Low:'#17c964'}[sev]||'#f5a524'; const r=26,circ=2*Math.PI*r,off=circ-(p/100)*circ; return `<svg width="64" height="64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="#232b38" stroke-width="6"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg>` }
+function setCount(id,val){ const el=document.getElementById(id); if(window.gsap){ const o={v:parseInt(el.textContent)||0}; gsap.to(o,{v:val,duration:.8,ease:'power2.out',onUpdate:()=>el.textContent=Math.round(o.v)}) } else el.textContent=val; }
 function render(){
   let list=[...tickets].sort((a,b)=>b.priority-a.priority);
   if(filter!=='All') list=list.filter(t=>t.category===filter||t.severity===filter);
-  document.getElementById('sTotal').textContent=tickets.length;
-  document.getElementById('sCrit').textContent=tickets.filter(t=>t.severity==='Critical').length;
-  document.getElementById('sDup').textContent=dupMergedTotal;
+  setCount('sTotal',tickets.length); setCount('sCrit',tickets.filter(t=>t.severity==='Critical').length); setCount('sDup',dupMergedTotal);
   document.getElementById('sSaved').textContent=(dupMergedTotal*0.5).toFixed(1)+' hrs';
   document.getElementById('list').innerHTML=list.map(t=>`
-  <div class="ticket ${t.severity}">
-    <div class="t-head"><span class="t-id">${t.id} • ${t.loc}</span><span class="score">🎯 ${t.priority}/100 Priority</span></div>
-    <p style="margin:10px 0;line-height:1.6" class="kannada">${t.text}</p>
+  <div class="ticket">
+    <div class="t-head"><div><div class="t-id">${t.id} · ${t.loc} · ${t.time||''}</div><p class="t-text kannada">${t.text}</p></div>
+    <div class="ring">${ringSVG(t.priority,t.severity)}<div class="rv">${t.priority}</div><div style="font-size:10px;color:var(--muted);letter-spacing:.1em">PRIORITY</div></div></div>
     ${t.photo?`<img src="${t.photo}" class="photo">`:''}
-    <div class="chips"><span class="chip">${t.category}</span><span class="chip red">${t.severity}</span><span class="chip green">${t.dept}</span><span class="chip amber">📍 Near ${t.land}</span><span class="chip">🌐 ${t.lang||'English'}</span><span class="chip amber">⏰ SLA: ${t.sla||'3 days'}</span>${t.duplicates>1?`<span class="chip red">🔁 ${t.duplicates} citizens reported this</span>`:''}<span class="chip">${t.status}</span></div>
-    <div class="reason"><b>AI Reason:</b> ${t.reason}${(t.severity==='Critical'||t.severity==='High')?`<br><b>⚠️ Auto-escalation:</b> if not Assigned within half the SLA, this escalates to the Ward Engineer and the citizen gets a status update.`:''}</div>
-    <div class="breakdown"><b>Why this priority?</b> Severity ${t.breakdown.sevPts} + Vulnerable Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Community ${t.breakdown.communityPts||0} + Urgency 15
-    <div class="bar"><i style="width:${t.priority}%"></i></div></div>
-    <div class="actions"><button onclick="cycleStatus('${t.id}')">🔄 Change Status: ${t.status}</button><button onclick="toast('📍 Field crew route: ${t.loc} — added to today\\'s optimised route with ${tickets.filter(x=>x.loc===t.loc).length} nearby tickets')">🗺️ Add to Crew Route</button></div>
-  </div>`).join('') || '<p>No tickets in this filter.</p>';
+    <div class="chips"><span class="chip">${t.category}</span><span class="chip sev-${t.severity}">${t.severity}</span><span class="chip dept">${t.dept}</span><span class="chip">Near ${t.land}</span><span class="chip">${t.lang||'English'}</span><span class="chip">SLA: ${t.sla||'3 days'}</span>${t.duplicates>1?`<span class="chip" style="color:#f31260;border-color:rgba(243,18,96,.5)">${t.duplicates} citizens reported this</span>`:''}<span class="chip">${t.status}</span></div>
+    <div class="reason"><b>AI Reason:</b> ${t.reason}${(t.severity==='Critical'||t.severity==='High')?`<br><b>Auto-escalation:</b> if not Assigned within half the SLA, this escalates to the Ward Engineer and the citizen gets a status update.`:''}</div>
+    <div class="breakdown"><b>Why this priority?</b> Severity ${t.breakdown.sevPts} + Vulnerable Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Community ${t.breakdown.communityPts||0} + Urgency 15<div class="bar"><i data-w="${t.priority}"></i></div></div>
+    <div class="actions"><button onclick="cycleStatus('${t.id}')">Change Status: ${t.status}</button><button onclick="toast('Field crew route: ${t.loc} — added to today\\'s optimised route')">Add to Crew Route</button></div>
+  </div>`).join('') || '<p style="color:var(--muted)">No tickets in this filter.</p>';
+  requestAnimationFrame(()=>document.querySelectorAll('.bar i').forEach(i=>i.style.width=i.dataset.w+'%'));
+  if(window.gsap) gsap.fromTo('.ticket',{y:16,opacity:0},{y:0,opacity:1,duration:.5,stagger:.06,ease:'power3.out',overwrite:true,clearProps:'transform'});
 }
-function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',4200); }
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; if(window.gsap) gsap.fromTo(el,{y:16,opacity:0},{y:0,opacity:1,duration:.35,ease:'power3.out'}); setTimeout(()=>el.style.display='none',4200); }
 render();
+</script>
+<script id="fx">
+/* ThreeUI-style 3D particle field (Three.js) — points slowly clustering, mouse parallax. Fully guarded: if the CDN is unreachable, the page simply has no background canvas. */
+(function(){
+  if(!window.THREE) return;
+  try{
+    const canvas=document.getElementById('bg3d');
+    const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+    const scene=new THREE.Scene();
+    const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,100); camera.position.z=14;
+    const N=420, pos=new Float32Array(N*3);
+    for(let i=0;i<N;i++){ const cluster=i%5, cx=(cluster-2)*4.5, cy=((cluster*7)%5-2)*2.2; pos[i*3]=cx+(Math.random()-.5)*3.4; pos[i*3+1]=cy+(Math.random()-.5)*2.6; pos[i*3+2]=(Math.random()-.5)*4; }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const mat=new THREE.PointsMaterial({color:0xf5a524,size:.09,transparent:true,opacity:.85});
+    const pts=new THREE.Points(geo,mat); scene.add(pts);
+    const mat2=new THREE.PointsMaterial({color:0x5b8cff,size:.05,transparent:true,opacity:.5});
+    const geo2=new THREE.BufferGeometry(); const p2=new Float32Array(200*3); for(let i=0;i<200*3;i++) p2[i]=(Math.random()-.5)*26;
+    geo2.setAttribute('position',new THREE.BufferAttribute(p2,3)); scene.add(new THREE.Points(geo2,mat2));
+    let mx=0,my=0; addEventListener('mousemove',e=>{mx=e.clientX/innerWidth-.5; my=e.clientY/innerHeight-.5});
+    function size(){ renderer.setSize(innerWidth,innerHeight); camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); }
+    size(); addEventListener('resize',size);
+    (function anim(t){ requestAnimationFrame(anim); pts.rotation.y=t*.00004; pts.rotation.x=my*.25; pts.position.x=mx*1.2; renderer.render(scene,camera); })(0);
+  }catch(e){}
+})();
+/* GSAP choreography — hero monument lines, bento tiles and panels rise in sequence; ScrollTrigger reveals. Guarded for offline. */
+(function(){
+  if(!window.gsap) return;
+  gsap.from('.monument h1',{y:44,opacity:0,duration:1,ease:'power3.out'});
+  gsap.from('.monument p',{y:24,opacity:0,duration:.9,delay:.25,ease:'power3.out'});
+  gsap.from('.bento .tile:not(.monument)',{y:26,opacity:0,duration:.7,delay:.35,stagger:.09,ease:'power3.out',clearProps:'all'});
+  if(window.ScrollTrigger){ gsap.registerPlugin(ScrollTrigger); gsap.utils.toArray('.main .fx').forEach(el=>gsap.from(el,{y:30,opacity:0,duration:.7,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%'},clearProps:'all'})); }
+})();
 </script>
 </body>
 </html>
