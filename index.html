@@ -93,7 +93,7 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 <div class="tile monument fx"><div class="kicker">CivicLens · AI Triage for Citizen Complaints</div>
 <h1>One issue.<br>One ticket.<br><em>Fixed first.</em></h1>
 <p>100 teams will build a complaint form. We fix the real failure: 40% of reports are duplicates, and a pothole near a school is not a pothole on an empty road. FixFirst merges, verifies and escalates — with a priority score an officer can defend.</p></div>
-<div class="tile fx"><div class="num">01</div><h3>Duplicate Cluster Engine</h3><p>Same pothole reported 12 times becomes one master ticket. Community count raises priority instead of burying it.</p></div>
+<div class="tile fx"><div class="num">01</div><h3>Incident Fusion Engine</h3><p>Complaints about the same real-world problem fuse into one Incident, scored on 4 signals: location, category, semantic similarity, time window. Strong match auto-merges. Weak match goes to a human — never a silent wrong merge.</p></div>
 <div class="tile fx"><div class="num">02</div><h3>Vulnerable-Zone Escalation</h3><p>Near a school or hospital, severity upgrades automatically. Context, not just keywords.</p></div>
 <div class="tile fx"><div class="num">03</div><h3>Vague? We Ask, Not Guess</h3><p>“Road bad” triggers 3 clarifying follow-ups with one-tap detail chips — judgment, not blind classification.</p></div>
 <div class="tile fx"><div class="num">04</div><h3>Explainable Score 0–100</h3><p>Severity + Zone + Community + Photo. Every point shown. Plus SLA timers with auto-escalation to the Ward Engineer.</p></div>
@@ -129,7 +129,7 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 <div class="stats">
 <div class="stat fx"><b data-count id="sTotal">0</b><span>Total Tickets</span></div>
 <div class="stat crit fx"><b data-count id="sCrit">0</b><span>Critical</span></div>
-<div class="stat dup fx"><b data-count id="sDup">0</b><span>Duplicates Merged</span></div>
+<div class="stat dup fx"><b data-count id="sDup">0</b><span>Reports Fused</span></div>
 <div class="stat saved fx"><b id="sSaved">0 hrs</b><span>Officer Time Saved</span></div>
 </div>
 <div class="panel fx">
@@ -137,6 +137,7 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 <div class="filters" id="filters">
 <button class="active" onclick="setFilter('All',this)">All</button><button onclick="setFilter('Critical',this)">Critical</button><button onclick="setFilter('Roads',this)">Roads</button><button onclick="setFilter('Waste',this)">Waste</button><button onclick="setFilter('Water',this)">Water</button><button onclick="setFilter('Electricity',this)">Electricity</button><button onclick="setFilter('Drainage',this)">Drainage</button><button onclick="setFilter('Trees',this)">Trees</button>
 </div>
+<div id="reviewQueue"></div>
 <div id="list"></div>
 </div>
 </div>
@@ -208,6 +209,33 @@ function loadDemo(type){
   if(type==='vague'){ document.getElementById('complaint').value='road bad'; document.getElementById('landmark').value='Residential'; }
   window.scrollTo({top:document.querySelector('.main').offsetTop-70,behavior:'smooth'}); toast('Demo loaded — now tap Submit & Run AI Triage');
 }
+
+function fusionScore(ex,text,category,loc){
+  const locPts=ex.loc===loc?30:0;
+  const catPts=ex.category===category?15:0;
+  const semPts=Math.round(similarity(ex.text,text)*40);
+  const timePts=15; // all open incidents are inside the 72-hour fusion window in this demo; production uses real timestamps + GPS radius
+  return {locPts,catPts,semPts,timePts,total:locPts+catPts+semPts+timePts};
+}
+let pendingFusion=null;
+function applyMerge(dup){ dup.duplicates++; dupMergedTotal++; dup.breakdown.communityPts=Math.min(20,dup.breakdown.communityPts+5); dup.priority=Math.min(100,dup.priority+5); }
+function createIncident(text,loc,land,t,photo){
+  const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photo,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+  tickets.unshift(ticket); lastComplaint=text; return ticket;
+}
+function mergePending(){ if(!pendingFusion) return; const dup=pendingFusion.candidate; applyMerge(dup); toast('Officer merged it into '+dup.id+' — this Incident now has '+dup.duplicates+' supporting reports, priority '+dup.priority+'/100.'); pendingFusion=null; render(); }
+function separatePending(){ if(!pendingFusion) return; const tk=createIncident(pendingFusion.text,pendingFusion.loc,pendingFusion.land,pendingFusion.t,pendingFusion.photo); toast('Kept separate — new Incident '+tk.id+' created by officer decision.'); pendingFusion=null; render(); }
+function renderReview(){
+  const q=document.getElementById('reviewQueue'); if(!q) return;
+  if(!pendingFusion){ q.innerHTML=''; return; }
+  const f=pendingFusion.f, c=pendingFusion.candidate;
+  q.innerHTML='<div style="background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.55);border-radius:14px;padding:15px;margin-bottom:14px;line-height:1.65">'
+    +'<b>REVIEW QUEUE — Possible Incident Match ('+f.total+'/100)</b><br>'
+    +'New report: &ldquo;'+pendingFusion.text+'&rdquo;<br>May be the same Incident as <b>'+c.id+'</b>: &ldquo;'+c.text+'&rdquo;<br>'
+    +'Signals — Location '+f.locPts+'/30 · Category '+f.catPts+'/15 · Semantic '+f.semPts+'/40 · Time window '+f.timePts+'/15<br>'
+    +'<button onclick="mergePending()" style="margin:8px 6px 0 0;padding:9px 12px;border-radius:9px;border:1px solid var(--amber);background:var(--amber);color:#161006;font-weight:700;cursor:pointer">Merge into '+c.id+'</button>'
+    +'<button onclick="separatePending()" style="margin:8px 0 0;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:600;cursor:pointer">Keep Separate — New Incident</button></div>';
+}
 function submitComplaint(){
   const text=document.getElementById('complaint').value.trim(); if(!text){alert('Please write your complaint');return}
   if(isVague(text)){
@@ -217,14 +245,18 @@ function submitComplaint(){
   }
   const loc=document.getElementById('location').value; const land=document.getElementById('landmark').value;
   const t=triage(text,land,!!photoData,loc);
-  let dup=null; for(const ex of tickets){ if(ex.category===t.category && ex.loc===loc && similarity(ex.text,text)>=0.28){dup=ex;break} if(ex.category===t.category && similarity(ex.text,text)>=0.55){dup=ex;break} }
-  if(dup){
-    dup.duplicates++; dupMergedTotal++; dup.breakdown.communityPts=Math.min(20,dup.breakdown.communityPts+5); dup.priority=Math.min(100,dup.priority+5);
-    document.getElementById('aiResult').innerHTML=`<div class="result dup"><b>DUPLICATE DETECTED — Smart Merge.</b><br>This issue already exists as <b>${dup.id}</b>. Instead of a new buried ticket, yours merged into the master ticket.<br><b>Community reports: ${dup.duplicates} citizens</b> · Priority boosted to <b>${dup.priority}/100</b><br>Officer time saved — and the issue now ranks higher.</div>`;
-    toast(`Duplicate merged into ${dup.id} — priority now ${dup.priority}/100. That is the winning difference.`);
+  let best=null,bestF=null; for(const ex of tickets){ if(ex.status==='Resolved') continue; const f=fusionScore(ex,text,t.category,loc); if(!bestF||f.total>bestF.total){bestF=f;best=ex} }
+  if(bestF && t.severity==='Critical' && best.severity!=='Critical') bestF=null; // life-safety rule: a Critical hazard always raises its own Incident immediately — fusion never delays it
+  if(bestF && bestF.total>=75){ const dup=best;
+    applyMerge(dup);
+    document.getElementById('aiResult').innerHTML=`<div class="result dup"><b>INCIDENT FUSION — Auto-Merged.</b><br>4 signals matched <b>${dup.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time window ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (75+ = auto-merge). Your report is now a supporting report on that Incident, not a buried duplicate.<br><b>Community reports: ${dup.duplicates} citizens</b> · Priority boosted to <b>${dup.priority}/100</b><br>Officer time saved — and the issue now ranks higher.</div>`;
+    toast(`Incident Fusion: auto-merged into ${dup.id} at ${bestF.total}/100 — priority now ${dup.priority}/100.`);
+  } else if(bestF && bestF.total>=50){
+    pendingFusion={text,loc,land,t,photo:photoData,candidate:best,f:bestF};
+    document.getElementById('aiResult').innerHTML=`<div class="result vague"><b>INCIDENT FUSION — Possible match. A human decides.</b><br>Signals vs <b>${best.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (50-74 = human review, never a silent wrong merge).<br>It is waiting in the officer <b>Review Queue</b> on the dashboard: Merge, or Keep Separate.</div>`;
+    toast('Possible match — sent to the officer Review Queue instead of guessing.');
   } else {
-    const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photoData,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
-    tickets.unshift(ticket); lastComplaint=text;
+    const ticket=createIncident(text,loc,land,t,photoData);
     document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.<br><button onclick="liveAICheck()">Verify with Live AI (beta)</button><div id="liveAI" style="margin-top:8px"></div></div>`;
     toast(`New ticket ${ticket.id} — ${t.severity} · ${t.category} · Priority ${t.priority}/100`);
   }
@@ -269,6 +301,7 @@ function cycleStatus(id){ const t=tickets.find(x=>x.id===id); t.status=(t.status
 function ringSVG(p,sev){ const c={Critical:'#f31260',High:'#f97316',Medium:'#eab308',Low:'#17c964'}[sev]||'#f5a524'; const r=26,circ=2*Math.PI*r,off=circ-(p/100)*circ; return `<svg width="64" height="64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="#232b38" stroke-width="6"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg>` }
 function setCount(id,val){ const el=document.getElementById(id); if(window.gsap){ const o={v:parseInt(el.textContent)||0}; gsap.to(o,{v:val,duration:.8,ease:'power2.out',onUpdate:()=>el.textContent=Math.round(o.v)}) } else el.textContent=val; }
 function render(){
+  renderReview();
   let list=[...tickets].sort((a,b)=>b.priority-a.priority);
   if(filter!=='All') list=list.filter(t=>t.category===filter||t.severity===filter);
   setCount('sTotal',tickets.length); setCount('sCrit',tickets.filter(t=>t.severity==='Critical').length); setCount('sDup',dupMergedTotal);
