@@ -1,4 +1,4 @@
-# FixFirst — CivicLens AI Triage
+# CivicLens — AI Triage for Citizen Complaints
 **Team Neon Pulse | Tech Habba | Prompt to Product | Acharya Institute of Technology**
 
 **Team Leader:** Rohan P (1AY25CD403, GitHub: rohanp-02)  
@@ -12,7 +12,7 @@ Citizens report potholes, garbage, broken streetlights, water leaks and fallen t
 **Required:** unstructured complaint (text + optional photo, English/regional language) → structured, prioritised, correctly routed ticket + priority-sorted officer dashboard.
 
 ## Our Unique Angle (Why we are different from 100+ teams)
-Most teams build a form → AI label → list. FixFirst solves the *real* triage failures:
+Most teams build a form → AI label → list. CivicLens solves the *real* triage failures:
 
 1. **Incident Fusion Engine** — Complaints about the same real-world problem fuse into one **Incident** with supporting reports, scored on 4 signals: Location (30) + Category (15) + Semantic similarity (40) + Time window (15). **75+ auto-merges, 50–74 goes to a human Review Queue, below 50 creates a new Incident** — never a silent wrong merge. Life-safety rule: a Critical hazard always raises its own Incident immediately; fusion never delays it.
 2. **Vulnerable-Zone Escalation** — A hazard near a School/Hospital is automatically more severe than the same hazard in an empty area. Context-aware severity, not keyword-only.
