@@ -215,6 +215,8 @@ html{scroll-behavior:smooth}
 <button type="button" class="photobtn" onclick="openCamera()">📷 Take Photo</button>
 <button type="button" class="photobtn alt" onclick="document.getElementById('photo').click()">🖼 Upload Photo</button>
 </div>
+<button type="button" class="photobtn alt" style="width:100%;margin-top:8px" onclick="useMyLocationPhoto()">🎯 Use My Current Location — geo-tag my photo &amp; pin the spot</button>
+<p style="font-size:12px;color:var(--muted);margin:6px 0 0">Photos taken here are <b>geo-tagged by default</b> with your current location, so the crew reaches the exact spot.</p>
 <input type="file" id="photo" accept="image/*" style="display:none">
 <input type="file" id="photoCam" accept="image/*" capture="environment" style="display:none">
 <div id="camPanel" style="display:none;margin-top:10px">
@@ -329,7 +331,7 @@ html{scroll-behavior:smooth}
 <tr><td>Leaflet + OpenStreetMap</td><td>Exact-location pinning — tap-to-pin or one-tap GPS; coordinates stored on the ticket with a view-on-map link for crews; degrades gracefully offline</td></tr>
 <tr><td>GSAP</td><td>Motion layer — guarded, so triage survives any CDN failure; the layout itself is a clean, simple white interface</td></tr>
 <tr><td>Hybrid Live AI (optional)</td><td>&ldquo;Verify with Live AI&rdquo; calls a live LLM with a 6-second timeout; if unreachable, it says so and the deterministic result stands</td></tr>
-<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (20 entries) in the GitHub repo</td></tr>
+<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (21 entries) in the GitHub repo</td></tr>
 </table>
 <div class="core"><b>Human + AI:</b> the AI analyses and recommends. Municipal officials verify and make the final decisions.</div>
 </section>
@@ -389,8 +391,44 @@ async function setPhoto(dataUrl){
   photoData=dataUrl; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
   photoMeta=await analyzePhoto(photoData);
   const pc=document.getElementById('photoCheck');
-  if(pc&&photoMeta){ pc.innerHTML='<b>Photo Evidence Check</b> (on-device, automated): '+photoCheckText(photoMeta)+'<br><span style="color:var(--muted)">Quality analysis only — hazard content detection is the production Vision step. Photo adds +10 credibility.</span>'; pc.style.display='block'; }
+  if(pc&&photoMeta){ pc.innerHTML='<b>Photo Evidence Check</b> (on-device, automated): '+photoCheckText(photoMeta)+'<br><span id="geoLine" style="color:var(--muted)">📍 Geo-tagging this photo with your current location…</span><br><span style="color:var(--muted)">Quality analysis only — hazard content detection is the production Vision step. Photo adds +10 credibility.</span>'; pc.style.display='block'; }
   toast('Photo attached: +10 credibility — evidence quality check '+(photoMeta?('done: '+(photoMeta.flags.length?photoMeta.flags.length+' flag(s)':'clean')):'unavailable'));
+  stampGeoTag();
+}
+let geoLoc=null, geoLocTs=0;
+function captureGeo(force,cb){
+  if(!force&&geoLoc&&(Date.now()-geoLocTs<60000)){ cb(geoLoc); return; }
+  if(!navigator.geolocation){ cb(null); return; }
+  navigator.geolocation.getCurrentPosition(
+    p=>{ geoLoc={lat:+p.coords.latitude.toFixed(5),lng:+p.coords.longitude.toFixed(5)}; geoLocTs=Date.now(); cb(geoLoc); },
+    ()=>cb(null),
+    {timeout:6000,maximumAge:30000});
+}
+function applyGeo(coords,silent){
+  if(!coords) return false;
+  if(photoMeta) photoMeta.geo=coords;
+  const gl=document.getElementById('geoLine');
+  if(gl) gl.innerHTML='📍 <b>Photo geo-tagged:</b> '+coords.lat+', '+coords.lng+' — captured with the photo, travels with the ticket.';
+  if(!pinLoc) setPin(coords.lat,coords.lng);
+  return true;
+}
+function stampGeoTag(){
+  captureGeo(false,coords=>{
+    if(!applyGeo(coords,true)){
+      const gl=document.getElementById('geoLine');
+      if(gl) gl.textContent='📍 Location unavailable on this device — pin the spot on the map above so crews still get the exact place.';
+    }
+  });
+}
+function useMyLocationPhoto(){
+  captureGeo(true,coords=>{
+    if(!coords){ toast('Could not get your location — tap the map above to drop the pin manually'); return; }
+    const w=document.getElementById('mapWrap'); if(w&&w.style.display==='none'){ w.style.display='block'; initPinMap(); }
+    if(pinMap) pinMap.setView([coords.lat,coords.lng],16);
+    setPin(coords.lat,coords.lng);
+    if(photoMeta){ applyGeo(coords); toast('Location set — photo geo-tagged at '+coords.lat+', '+coords.lng+' and the spot is pinned.'); }
+    else toast('Location saved — your photo will be geo-tagged automatically, and the spot is pinned on the map.');
+  });
 }
 function handlePhotoFile(f){ if(!f) return; const r=new FileReader(); r.onload=ev=>setPhoto(ev.target.result); r.readAsDataURL(f); }
 document.getElementById('photo').addEventListener('change',e=>handlePhotoFile(e.target.files[0]));
@@ -435,11 +473,10 @@ function setPin(lat,lng){
   document.getElementById('pinText').innerHTML='📍 Pinned: <b>'+pinLoc.lat+', '+pinLoc.lng+'</b> — the crew gets this exact spot.';
 }
 function useMyLocation(){
-  if(!navigator.geolocation){ toast('Location is not available on this device — tap the map to drop the pin instead'); return; }
-  navigator.geolocation.getCurrentPosition(
-    p=>{ const w=document.getElementById('mapWrap'); if(w.style.display==='none'){ w.style.display='block'; } initPinMap(); if(pinMap) pinMap.setView([p.coords.latitude,p.coords.longitude],16); setPin(p.coords.latitude,p.coords.longitude); },
-    ()=>toast('Could not get your location — tap the map to drop the pin manually'),
-    {timeout:6000});
+  captureGeo(true,coords=>{
+    if(!coords){ toast('Could not get your location — tap the map to drop the pin manually'); return; }
+    const w=document.getElementById('mapWrap'); if(w.style.display==='none'){ w.style.display='block'; } initPinMap(); if(pinMap) pinMap.setView([coords.lat,coords.lng],16); setPin(coords.lat,coords.lng);
+  });
 }
 function clearPin(){
   pinLoc=null;
@@ -634,7 +671,7 @@ function render(){
     <div class="t-head"><div><div class="t-id">${t.id} · ${t.loc} · ${t.time||''}</div><p class="t-text kannada">${t.text}</p></div>
     <div class="ring">${ringSVG(t.priority,t.severity)}<div class="rv">${t.priority}</div><div style="font-size:10px;color:var(--muted);letter-spacing:.1em">PRIORITY</div></div></div>
     ${t.photo?`<img src="${t.photo}" class="photo">`:''}
-    ${t.photo&&t.photoMeta?`<div style="font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"><b>📷 Photo Evidence Check:</b> ${t.photoMeta.w}×${t.photoMeta.h} · Lighting ${t.photoMeta.bright<45?'Low':(t.photoMeta.bright>242?'Overexposed':'Good')} (${t.photoMeta.bright}/255) · Sharpness ${t.photoMeta.sharp<80?'Soft / blurry':'Sharp'}${t.photoMeta.flags.length?'<br>⚠ '+t.photoMeta.flags.join('<br>⚠ '):'<br>✓ No quality issues detected'}</div>`:''}
+    ${t.photo&&t.photoMeta?`<div style="font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"><b>📷 Photo Evidence Check:</b> ${t.photoMeta.w}×${t.photoMeta.h} · Lighting ${t.photoMeta.bright<45?'Low':(t.photoMeta.bright>242?'Overexposed':'Good')} (${t.photoMeta.bright}/255) · Sharpness ${t.photoMeta.sharp<80?'Soft / blurry':'Sharp'}${t.photoMeta.flags.length?'<br>⚠ '+t.photoMeta.flags.join('<br>⚠ '):'<br>✓ No quality issues detected'}${t.photoMeta.geo?'<br>📍 Photo geo-tagged at capture: '+t.photoMeta.geo.lat+', '+t.photoMeta.geo.lng:''}</div>`:''}
     ${t.coords?`<div style="font-size:12.5px;margin-top:8px">📍 <b>Exact location:</b> ${t.coords.lat}, ${t.coords.lng} · <a href="https://www.openstreetmap.org/?mlat=${t.coords.lat}&mlon=${t.coords.lng}#map=17/${t.coords.lat}/${t.coords.lng}" target="_blank" rel="noopener" style="color:var(--amber);font-weight:700">View on map ↗</a></div>`:''}
     <div class="chips"><span class="chip">${t.category}</span><span class="chip sev-${t.severity}">${t.severity}</span><span class="chip dept">${t.dept}</span><span class="chip">Near ${t.land}</span><span class="chip">${t.lang||'English'}</span><span class="chip">SLA: ${t.sla||'3 days'}</span>${t.escalated?'<span class="chip" style="color:#fff;background:var(--red);border-color:var(--red)">ESCALATED → Ward Engineer · Citizen notified</span>':(t.escSec!=null&&t.status==='Open'?'<span class="chip" data-esc="'+t.id+'">Escalates in '+fmtClock(t.escSec)+' (demo clock)</span>':'')}${t.duplicates>1?`<span class="chip" style="color:#f31260;border-color:rgba(243,18,96,.5)">${t.duplicates} citizens reported this</span>`:''}<span class="chip">${t.status}</span></div>
     <div class="reason"><b>AI Reason:</b> ${t.reason}${(t.severity==='Critical'||t.severity==='High')?`<br><b>Auto-escalation:</b> live countdown above (demo clock compresses half-SLA to minutes; production uses real hours). At zero, status flips to ESCALATED, it goes to the Ward Engineer and the citizen gets an SMS update.`:''}</div>
