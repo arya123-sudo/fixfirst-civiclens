@@ -531,7 +531,7 @@ function photoTap(){
 function stampGeoTag(){
   captureGeo(false,(coords,err)=>{
     if(coords){ applyGeo(coords,true); hideLocMsg(); return; }
-    if(pinLoc){ applyGeo(pinLoc,true); const gl=document.getElementById('geoLine'); if(gl) gl.innerHTML='📍 <b>Photo geo-tagged from your map pin:</b> '+pinLoc.lat+', '+pinLoc.lng; return; }
+    if(pinLoc){ applyGeo(pinLoc,true); const gl=document.getElementById('geoLine'); if(gl) gl.innerHTML='📍 <b>Photo geo-tagged from your map pin:</b> '+((placeName&&placeFor===coordsKey(pinLoc))?('<b>'+placeName+'</b> · '):'')+pinLoc.lat+', '+pinLoc.lng; return; }
     const gl=document.getElementById('geoLine');
     if(gl) gl.textContent='📍 Location unavailable on this device — pin the spot on the map above so crews still get the exact place.';
     const cap=document.getElementById('geoCaption');
