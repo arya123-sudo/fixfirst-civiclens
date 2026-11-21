@@ -1,4 +1,4 @@
-# Prompt Log — Team Neon Pulse — FixFirst (CivicLens)
+# Prompt Log — Team Neon Pulse — CivicLens — AI Triage for Citizen Complaints
 _Event: Tech Habba, Prompt to Product, Acharya — 21 Nov 2026, 4-hour window_
 
 | # | Tool | Prompt / Purpose | Outcome |
