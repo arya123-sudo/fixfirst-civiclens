@@ -216,6 +216,7 @@ html{scroll-behavior:smooth}
 <button type="button" class="photobtn alt" onclick="document.getElementById('photo').click()">🖼 Upload Photo</button>
 </div>
 <button type="button" class="photobtn alt" style="width:100%;margin-top:8px" onclick="useMyLocationPhoto()">🎯 Use My Current Location — geo-tag my photo &amp; pin the spot</button>
+<div id="locMsg" style="display:none;font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"></div>
 <p style="font-size:12px;color:var(--muted);margin:6px 0 0">Photos taken here are <b>geo-tagged by default</b> with your current location, so the crew reaches the exact spot.</p>
 <input type="file" id="photo" accept="image/*" style="display:none">
 <input type="file" id="photoCam" accept="image/*" capture="environment" style="display:none">
@@ -228,6 +229,7 @@ html{scroll-behavior:smooth}
 <p style="font-size:12px;color:var(--muted);line-height:1.5">Your camera stays on your device — the photo is used only for this complaint.</p>
 </div>
 <img id="preview" class="photo" style="display:none">
+<button type="button" id="removePhotoBtn" class="photobtn alt" style="display:none;width:100%;margin-top:8px" onclick="removePhoto()">🗑 Remove Photo — attach a different one instead</button>
 <div id="photoCheck" style="display:none;font-size:13px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-top:8px"></div>
 <div id="aiResult"></div>
 <button class="shimmer" onclick="submitComplaint()">Submit &amp; Run AI Triage</button>
@@ -331,7 +333,7 @@ html{scroll-behavior:smooth}
 <tr><td>Leaflet + OpenStreetMap</td><td>Exact-location pinning — tap-to-pin or one-tap GPS; coordinates stored on the ticket with a view-on-map link for crews; degrades gracefully offline</td></tr>
 <tr><td>GSAP</td><td>Motion layer — guarded, so triage survives any CDN failure; the layout itself is a clean, simple white interface</td></tr>
 <tr><td>Hybrid Live AI (optional)</td><td>&ldquo;Verify with Live AI&rdquo; calls a live LLM with a 6-second timeout; if unreachable, it says so and the deterministic result stands</td></tr>
-<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (21 entries) in the GitHub repo</td></tr>
+<tr><td>GenAI-assisted development</td><td>Architecture, code and iteration with Muse / ChatGPT-class tools — full prompt log (22 entries) in the GitHub repo</td></tr>
 </table>
 <div class="core"><b>Human + AI:</b> the AI analyses and recommends. Municipal officials verify and make the final decisions.</div>
 </section>
@@ -410,6 +412,7 @@ async function setPhoto(dataUrl){
   }
   photoData=norm.url;
   const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
+  const rb=document.getElementById('removePhotoBtn'); if(rb) rb.style.display='block';
   setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
   photoMeta=await analyzePhoto(photoData);
   if(photoMeta){ photoMeta.w=norm.w; photoMeta.h=norm.h; }
@@ -424,13 +427,26 @@ async function setPhoto(dataUrl){
 }
 let geoLoc=null, geoLocTs=0;
 function captureGeo(force,cb){
-  if(!force&&geoLoc&&(Date.now()-geoLocTs<60000)){ cb(geoLoc); return; }
-  if(!navigator.geolocation){ cb(null); return; }
-  navigator.geolocation.getCurrentPosition(
-    p=>{ geoLoc={lat:+p.coords.latitude.toFixed(5),lng:+p.coords.longitude.toFixed(5)}; geoLocTs=Date.now(); cb(geoLoc); },
-    ()=>cb(null),
-    {timeout:6000,maximumAge:30000});
+  if(!force&&geoLoc&&(Date.now()-geoLocTs<60000)){ cb(geoLoc,null); return; }
+  if(!navigator.geolocation){ cb(null,'unsupported'); return; }
+  const ok=p=>{ geoLoc={lat:+p.coords.latitude.toFixed(5),lng:+p.coords.longitude.toFixed(5)}; geoLocTs=Date.now(); cb(geoLoc,null); };
+  navigator.geolocation.getCurrentPosition(ok,
+    e1=>{ navigator.geolocation.getCurrentPosition(ok, e2=>cb(null,e2&&e2.code?e2.code:(e1&&e1.code)), {enableHighAccuracy:false,timeout:15000,maximumAge:300000}); },
+    {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
+function geoErrorText(code){
+  if(code===1) return 'Location is BLOCKED for this site. Fix: tap the lock / tune icon in the address bar → Site settings → Location → Allow, then tap the location button again. (On Android Chrome: ⋮ menu → Settings → Site settings → Location.)';
+  if(code===2) return 'Your phone could not find its location — make sure Location / GPS is switched ON in the phone quick settings, step near a window if indoors, then tap again.';
+  if(code===3) return 'Location took too long (weak GPS indoors). Move near a window or outdoors and tap again — or pin the spot on the map, it works without GPS.';
+  return 'Location is not available in this browser. You can still pin the exact spot on the map — it works without GPS.';
+}
+function showLocMsg(code){
+  const m=document.getElementById('locMsg');
+  if(m){ m.innerHTML='📍 <b>Could not get your location:</b> '+geoErrorText(code); m.style.display='block'; }
+  const pt=document.getElementById('pinText');
+  if(pt) pt.innerHTML='📍 '+geoErrorText(code);
+}
+function hideLocMsg(){ const m=document.getElementById('locMsg'); if(m) m.style.display='none'; }
 function applyGeo(coords,silent){
   if(!coords) return false;
   if(photoMeta) photoMeta.geo=coords;
@@ -440,16 +456,18 @@ function applyGeo(coords,silent){
   return true;
 }
 function stampGeoTag(){
-  captureGeo(false,coords=>{
+  captureGeo(false,(coords,err)=>{
     if(!applyGeo(coords,true)){
       const gl=document.getElementById('geoLine');
       if(gl) gl.textContent='📍 Location unavailable on this device — pin the spot on the map above so crews still get the exact place.';
-    }
+      showLocMsg(err);
+    } else hideLocMsg();
   });
 }
 function useMyLocationPhoto(){
-  captureGeo(true,coords=>{
-    if(!coords){ toast('Could not get your location — tap the map above to drop the pin manually'); return; }
+  captureGeo(true,(coords,err)=>{
+    if(!coords){ showLocMsg(err); toast('Could not get your location — see the fix shown under the location button'); return; }
+    hideLocMsg();
     const w=document.getElementById('mapWrap'); if(w&&w.style.display==='none'){ w.style.display='block'; initPinMap(); }
     if(pinMap) pinMap.setView([coords.lat,coords.lng],16);
     setPin(coords.lat,coords.lng);
@@ -458,6 +476,15 @@ function useMyLocationPhoto(){
   });
 }
 function handlePhotoFile(f){ if(!f) return; const r=new FileReader(); r.onload=ev=>setPhoto(ev.target.result); r.readAsDataURL(f); }
+function removePhoto(silent){
+  photoData=null; photoMeta=null;
+  const p=document.getElementById('preview'); if(p){ p.style.display='none'; p.removeAttribute('src'); }
+  const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
+  const rb=document.getElementById('removePhotoBtn'); if(rb) rb.style.display='none';
+  const f1=document.getElementById('photo'); if(f1) f1.value='';
+  const f2=document.getElementById('photoCam'); if(f2) f2.value='';
+  if(!silent) toast('Photo removed — you can take or upload a different one');
+}
 document.getElementById('photo').addEventListener('change',e=>handlePhotoFile(e.target.files[0]));
 document.getElementById('photoCam').addEventListener('change',e=>handlePhotoFile(e.target.files[0]));
 let camStream=null;
@@ -500,8 +527,9 @@ function setPin(lat,lng){
   document.getElementById('pinText').innerHTML='📍 Pinned: <b>'+pinLoc.lat+', '+pinLoc.lng+'</b> — the crew gets this exact spot.';
 }
 function useMyLocation(){
-  captureGeo(true,coords=>{
-    if(!coords){ toast('Could not get your location — tap the map to drop the pin manually'); return; }
+  captureGeo(true,(coords,err)=>{
+    if(!coords){ showLocMsg(err); toast('Could not get your location — see the fix shown in the form'); return; }
+    hideLocMsg();
     const w=document.getElementById('mapWrap'); if(w.style.display==='none'){ w.style.display='block'; } initPinMap(); if(pinMap) pinMap.setView([coords.lat,coords.lng],16); setPin(coords.lat,coords.lng);
   });
 }
@@ -617,7 +645,7 @@ function submitComplaint(){
     document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.<br><button onclick="liveAICheck()">Verify with Live AI (beta)</button> <button onclick="showSection('dashboard')">View on Officer Dashboard →</button><div id="liveAI" style="margin-top:8px"></div></div>`;
     toast(`New ticket ${ticket.id} — ${t.severity} · ${t.category} · Priority ${t.priority}/100`);
   }
-  photoData=null; photoMeta=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value=''; document.getElementById('photoCam').value=''; closeCamera(); clearPin(); const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
+  removePhoto(true); closeCamera(); clearPin();
   render(); renderHome();
 }
 
