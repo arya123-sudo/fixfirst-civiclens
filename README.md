@@ -6,6 +6,24 @@
 
 > One Issue. One Ticket. Fixed First — Where It Matters Most.
 
+## 📸 Screenshots
+
+**Home — one issue, one ticket, fixed first**
+
+![CivicLens home](screenshots/home.png)
+
+**Report a Problem — describe it, pin the exact spot on the map (place name resolved automatically), snap a geo-tagged photo**
+
+![Report a problem with map pin and place name](screenshots/report.png)
+
+**Track Your Complaint — live status by Ticket ID**
+
+![Track a complaint](screenshots/track.png)
+
+**Officer Dashboard — incidents ranked by explainable priority, with fusion and SLA countdowns**
+
+![Officer dashboard](screenshots/dashboard.png)
+
 ## Problem — CivicLens
 Citizens report potholes, garbage, broken streetlights, water leaks and fallen trees via apps/WhatsApp/social media. Municipal bodies get thousands of reports — many vague, many duplicates, many misrouted — so urgent issues get buried.
 
