@@ -139,6 +139,7 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 <label>Photo — optional, adds verification</label>
 <input type="file" id="photo" accept="image/*">
 <img id="preview" class="photo" style="display:none">
+<div id="photoCheck" style="display:none;font-size:13px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-top:8px"></div>
 <div id="aiResult"></div>
 <button class="shimmer" onclick="submitComplaint()">Submit &amp; Run AI Triage</button>
 <p style="font-size:12px;color:var(--muted);line-height:1.6">Language detection · Category · Severity + reason · Department routing · Duplicate check · Vague check</p>
@@ -183,7 +184,7 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 <div class="pgrid">
 <div class="pcard"><p class="num">STEP 1</p><h3>Citizen Input</h3><p>English, <span class="kannada">ಕನ್ನಡ</span> or हिन्दी complaint, with optional photo and what is nearby.</p></div>
 <div class="pcard"><p class="num">STEP 2</p><h3>AI Understanding</h3><p>Language identification, classification into 6 categories, severity with a one-line reason, department routing (BBMP · BWSSB · BESCOM).</p></div>
-<div class="pcard"><p class="num">STEP 3</p><h3>Photo Credibility Signal</h3><p>An attached photo adds +10 priority as a presence/credibility signal. Honest scope: production adds a Vision API for hazard detection in the image.</p></div>
+<div class="pcard"><p class="num">STEP 3</p><h3>Photo Evidence Check</h3><p>The moment a photo is attached, an on-device check analyses its dimensions, lighting and sharpness, flags low-light or blurry evidence for the officer, and adds +10 credibility. Honest scope: detecting the hazard <i>inside</i> the image is the production Vision API step.</p></div>
 <div class="pcard"><p class="num">STEP 4</p><h3>Incident Fusion</h3><p>Complaints describing the same real-world problem fuse into one Incident with supporting reports.</p></div>
 <div class="pcard"><p class="num">STEP 5</p><h3>Contextual Risk Boost</h3><p>Surroundings — a school, a hospital — re-weight severity and priority.</p></div>
 <div class="pcard"><p class="num">STEP 6</p><h3>Municipal Dashboard</h3><p>Unified incidents ranked by explainable priority, with SLA countdowns and auto-escalation to the Ward Engineer.</p></div>
@@ -254,10 +255,48 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 <div class="toast" id="toast"></div>
 
 <script id="logic">
-let photoData=null, dupMergedTotal=0, filter='All', seq=1042;
+let photoData=null, photoMeta=null, dupMergedTotal=0, filter='All', seq=1042;
+function analyzePhoto(dataUrl){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const W=img.naturalWidth,H=img.naturalHeight;
+        const cw=200, ch=Math.max(1,Math.round(200*H/W));
+        const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+        const cx=cv.getContext('2d'); cx.drawImage(img,0,0,cw,ch);
+        const d=cx.getImageData(0,0,cw,ch).data, gray=new Float32Array(cw*ch); let sum=0;
+        for(let i=0;i<cw*ch;i++){ const g=0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2]; gray[i]=g; sum+=g; }
+        const bright=sum/(cw*ch);
+        let lap=[],lm=0;
+        for(let y=1;y<ch-1;y++) for(let x=1;x<cw-1;x++){ const v=4*gray[y*cw+x]-gray[y*cw+x-1]-gray[y*cw+x+1]-gray[(y-1)*cw+x]-gray[(y+1)*cw+x]; lap.push(v); lm+=v; }
+        lm/=lap.length; let lv=0; for(const v of lap) lv+=(v-lm)*(v-lm); lv/=lap.length;
+        const flags=[];
+        if(bright<45) flags.push('Low-light photo — officer verification advised');
+        if(bright>242) flags.push('Overexposed photo — detail may be washed out');
+        if(lv<80) flags.push('Photo appears soft/blurry — evidence quality reduced');
+        res({w:W,h:H,bright:Math.round(bright),sharp:Math.round(lv),flags});
+      }catch(e){ res(null); }
+    };
+    img.onerror=()=>res(null);
+    img.src=dataUrl;
+  });
+}
+function photoCheckText(m){
+  if(!m) return '';
+  const light=m.bright<45?'Low':(m.bright>242?'Overexposed':'Good');
+  const sharp=m.sharp<80?'Soft / blurry':'Sharp';
+  return m.w+'×'+m.h+' · Lighting: '+light+' ('+m.bright+'/255) · Sharpness: '+sharp+(m.flags.length?'<br>⚠ '+m.flags.join('<br>⚠ '):'<br>✓ No quality issues detected');
+}
 document.getElementById('photo').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=ev=>{photoData=ev.target.result; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block'; toast('Photo attached: +10 credibility — presence check today; Vision-API hazard detection is the production step')}; r.readAsDataURL(f);
+  const r=new FileReader(); r.onload=async ev=>{
+    photoData=ev.target.result; const p=document.getElementById('preview'); p.src=photoData; p.style.display='block';
+    photoMeta=await analyzePhoto(photoData);
+    const pc=document.getElementById('photoCheck');
+    if(pc&&photoMeta){ pc.innerHTML='<b>Photo Evidence Check</b> (on-device, automated): '+photoCheckText(photoMeta)+'<br><span style="color:var(--muted)">Quality analysis only — hazard content detection is the production Vision step. Photo adds +10 credibility.</span>'; pc.style.display='block'; }
+    toast('Photo attached: +10 credibility — evidence quality check '+(photoMeta?('done: '+(photoMeta.flags.length?photoMeta.flags.length+' flag(s)':'clean')):'unavailable'));
+  }; r.readAsDataURL(f);
 });
 const CATS={
  Roads:{dept:'BBMP — Roads & Infrastructure',keys:['pothole','road','tar','asphalt','speed breaker','footpath','ಗುಂಡಿ','ರಸ್ತೆ','गड्ढा','सड़क','gundi','sadak','hole in road','broken road','accident']},
@@ -325,12 +364,12 @@ function fusionScore(ex,text,category,loc){
 }
 let pendingFusion=null;
 function applyMerge(dup){ dup.duplicates++; dupMergedTotal++; dup.breakdown.communityPts=Math.min(20,dup.breakdown.communityPts+5); dup.priority=Math.min(100,dup.priority+5); }
-function createIncident(text,loc,land,t,photo){
-  const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photo,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+function createIncident(text,loc,land,t,photo,meta){
+  const ticket={id:'CL-2026-'+(seq++),text,loc,land,...t,status:'Open',duplicates:1,photo:photo,photoMeta:meta||null,escSec:(t.severity==='Critical'?120:t.severity==='High'?240:null),escalated:false,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
   tickets.unshift(ticket); lastComplaint=text; return ticket;
 }
 function mergePending(){ if(!pendingFusion) return; const dup=pendingFusion.candidate; applyMerge(dup); toast('Officer merged it into '+dup.id+' — this Incident now has '+dup.duplicates+' supporting reports, priority '+dup.priority+'/100.'); pendingFusion=null; render(); }
-function separatePending(){ if(!pendingFusion) return; const tk=createIncident(pendingFusion.text,pendingFusion.loc,pendingFusion.land,pendingFusion.t,pendingFusion.photo); toast('Kept separate — new Incident '+tk.id+' created by officer decision.'); pendingFusion=null; render(); }
+function separatePending(){ if(!pendingFusion) return; const tk=createIncident(pendingFusion.text,pendingFusion.loc,pendingFusion.land,pendingFusion.t,pendingFusion.photo,pendingFusion.meta); toast('Kept separate — new Incident '+tk.id+' created by officer decision.'); pendingFusion=null; render(); }
 function renderReview(){
   const q=document.getElementById('reviewQueue'); if(!q) return;
   if(!pendingFusion){ q.innerHTML=''; return; }
@@ -358,15 +397,15 @@ function submitComplaint(){
     document.getElementById('aiResult').innerHTML=`<div class="result dup"><b>INCIDENT FUSION — Auto-Merged.</b><br>4 signals matched <b>${dup.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time window ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (75+ = auto-merge). Your report is now a supporting report on that Incident, not a buried duplicate.<br><b>Community reports: ${dup.duplicates} citizens</b> · Priority boosted to <b>${dup.priority}/100</b><br>Officer time saved — and the issue now ranks higher.</div>`;
     toast(`Incident Fusion: auto-merged into ${dup.id} at ${bestF.total}/100 — priority now ${dup.priority}/100.`);
   } else if(bestF && bestF.total>=50){
-    pendingFusion={text,loc,land,t,photo:photoData,candidate:best,f:bestF};
+    pendingFusion={text,loc,land,t,photo:photoData,meta:photoMeta,candidate:best,f:bestF};
     document.getElementById('aiResult').innerHTML=`<div class="result vague"><b>INCIDENT FUSION — Possible match. A human decides.</b><br>Signals vs <b>${best.id}</b> — Location ${bestF.locPts}/30 · Category ${bestF.catPts}/15 · Semantic ${bestF.semPts}/40 · Time ${bestF.timePts}/15 = <b>${bestF.total}/100</b> (50-74 = human review, never a silent wrong merge).<br>It is waiting in the officer <b>Review Queue</b> on the dashboard: Merge, or Keep Separate.</div>`;
     toast('Possible match — sent to the officer Review Queue instead of guessing.');
   } else {
-    const ticket=createIncident(text,loc,land,t,photoData);
+    const ticket=createIncident(text,loc,land,t,photoData,photoMeta);
     document.getElementById('aiResult').innerHTML=`<div class="result ok"><b>AI Triage complete in 1.8 sec</b><br>Language: <b>${t.lang}</b> · Category: <b>${t.category}</b> · Severity: <b>${t.severity}</b><br>Routed to: <b>${t.dept}</b><br>Priority: <b>${t.priority}/100</b> (Severity ${t.breakdown.sevPts} + Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Urgency 15) · SLA: <b>${t.sla}</b><br>Reason: ${t.reason}<br><b>Ticket ID: ${ticket.id}</b> — the citizen can track this.<br><button onclick="liveAICheck()">Verify with Live AI (beta)</button><div id="liveAI" style="margin-top:8px"></div></div>`;
     toast(`New ticket ${ticket.id} — ${t.severity} · ${t.category} · Priority ${t.priority}/100`);
   }
-  photoData=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value='';
+  photoData=null; photoMeta=null; document.getElementById('preview').style.display='none'; document.getElementById('photo').value=''; const pc=document.getElementById('photoCheck'); if(pc) pc.style.display='none';
   render();
 }
 
@@ -417,6 +456,7 @@ function render(){
     <div class="t-head"><div><div class="t-id">${t.id} · ${t.loc} · ${t.time||''}</div><p class="t-text kannada">${t.text}</p></div>
     <div class="ring">${ringSVG(t.priority,t.severity)}<div class="rv">${t.priority}</div><div style="font-size:10px;color:var(--muted);letter-spacing:.1em">PRIORITY</div></div></div>
     ${t.photo?`<img src="${t.photo}" class="photo">`:''}
+    ${t.photo&&t.photoMeta?`<div style="font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-top:8px"><b>📷 Photo Evidence Check:</b> ${t.photoMeta.w}×${t.photoMeta.h} · Lighting ${t.photoMeta.bright<45?'Low':(t.photoMeta.bright>242?'Overexposed':'Good')} (${t.photoMeta.bright}/255) · Sharpness ${t.photoMeta.sharp<80?'Soft / blurry':'Sharp'}${t.photoMeta.flags.length?'<br>⚠ '+t.photoMeta.flags.join('<br>⚠ '):'<br>✓ No quality issues detected'}</div>`:''}
     <div class="chips"><span class="chip">${t.category}</span><span class="chip sev-${t.severity}">${t.severity}</span><span class="chip dept">${t.dept}</span><span class="chip">Near ${t.land}</span><span class="chip">${t.lang||'English'}</span><span class="chip">SLA: ${t.sla||'3 days'}</span>${t.escalated?'<span class="chip" style="color:#fff;background:var(--red);border-color:var(--red)">ESCALATED → Ward Engineer · Citizen notified</span>':(t.escSec!=null&&t.status==='Open'?'<span class="chip" data-esc="'+t.id+'">Escalates in '+fmtClock(t.escSec)+' (demo clock)</span>':'')}${t.duplicates>1?`<span class="chip" style="color:#f31260;border-color:rgba(243,18,96,.5)">${t.duplicates} citizens reported this</span>`:''}<span class="chip">${t.status}</span></div>
     <div class="reason"><b>AI Reason:</b> ${t.reason}${(t.severity==='Critical'||t.severity==='High')?`<br><b>Auto-escalation:</b> live countdown above (demo clock compresses half-SLA to minutes; production uses real hours). At zero, status flips to ESCALATED, it goes to the Ward Engineer and the citizen gets an SMS update.`:''}</div>
     <div class="breakdown"><b>Why this priority?</b> Severity ${t.breakdown.sevPts} + Vulnerable Zone ${t.breakdown.zonePts} + Photo ${t.breakdown.photoPts} + Community ${t.breakdown.communityPts||0} + Urgency 15<div class="bar"><i data-w="${t.priority}"></i></div></div>

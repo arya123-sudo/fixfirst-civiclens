@@ -1,8 +1,8 @@
 # FixFirst — CivicLens AI Triage
 **Team Neon Pulse | Tech Habba | Prompt to Product | Acharya Institute of Technology**
 
-**Team Leader:** Rohan P (1AY25CD403)  
-**Members:** Arya Yaligar (1AY24AI012, GitHub: arya123-sudo), Shiva Prasad (1AY24CD051)
+**Team Leader:** Rohan P (1AY25CD403, GitHub: rohanp-02)  
+**Members:** Arya Yaligar (1AY24AI012, GitHub: arya123-sudo), Shiva Prasad (1AY24CD051, GitHub: shivaprasad938)
 
 > One Issue. One Ticket. Fixed First — Where It Matters Most.
 
@@ -16,7 +16,7 @@ Most teams build a form → AI label → list. FixFirst solves the *real* triage
 
 1. **Incident Fusion Engine** — Complaints about the same real-world problem fuse into one **Incident** with supporting reports, scored on 4 signals: Location (30) + Category (15) + Semantic similarity (40) + Time window (15). **75+ auto-merges, 50–74 goes to a human Review Queue, below 50 creates a new Incident** — never a silent wrong merge. Life-safety rule: a Critical hazard always raises its own Incident immediately; fusion never delays it.
 2. **Vulnerable-Zone Escalation** — A hazard near a School/Hospital is automatically more severe than the same hazard in an empty area. Context-aware severity, not keyword-only.
-3. **Photo Credibility Check** — Photo attached = +10 priority as a presence/credibility signal today. Honest scope: production adds a Vision API for actual hazard detection in the image; the prototype does not claim image analysis it doesn't do.
+3. **Photo Evidence Check** — The moment a photo is attached, an on-device automated check analyses its dimensions, lighting (mean brightness) and sharpness (Laplacian variance), flags low-light / overexposed / blurry evidence on the ticket for the officer, and adds +10 priority. Honest scope: it checks evidence *quality*, not content — detecting the hazard inside the image is the production Vision API step, not claimed here.
 4. **Explainable Priority Score 0–100** — Every ticket shows its breakdown: Severity (0-40) + Zone (8-20) + Community (0-20) + Photo (0/10) + Urgency (15). No black box — officers can defend the order to citizens/councillors.
 
 ## Features (All 5 Required + Extras)
@@ -57,7 +57,6 @@ Muse / ChatGPT-class GenAI for ideation, triage logic design, code generation & 
 - Scale: ward → city → state, WhatsApp bot intake, SLA timers & auto-escalation, officer mobile app
 
 ## Team — Neon Pulse
-- Rohan P — Team Leader — 1AY25CD403
-- Arya Yaligar — 1AY24AI012 — GitHub: arya123-sudo
-- Shiva Prasad — 1AY24CD051
-_GitHub IDs for Rohan & Shiva to be added when shared._
+- Rohan P — Team Leader — 1AY25CD403 — GitHub: [rohanp-02](https://github.com/rohanp-02)
+- Arya Yaligar — 1AY24AI012 — GitHub: [arya123-sudo](https://github.com/arya123-sudo)
+- Shiva Prasad — 1AY24CD051 — GitHub: [shivaprasad938](https://github.com/shivaprasad938)
